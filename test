@@ -364,11 +364,11 @@ if syn and syn.protect_gui then pcall(syn.protect_gui, ScreenGui) end
 ScreenGui.Parent = guiParent()
 
 local Main = Instance.new("Frame")
-Main.Name = "Main"; Main.AnchorPoint = Vector2.new(0.5, 0.5); Main.Size = UDim2.fromOffset(765, 525)
+Main.Name = "Main"; Main.AnchorPoint = Vector2.new(0.5, 0.5); Main.Size = UDim2.fromOffset(918, 630)
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
 Main.BackgroundColor3 = C.bg; Main.BorderSizePixel = 0; Main.Parent = ScreenGui
 corner(Main, 12); stroke(Main, C.stroke, 1)
-local UIScale = Instance.new("UIScale"); UIScale.Scale = 0.85; UIScale.Parent = Main
+local UIScale = Instance.new("UIScale"); UIScale.Scale = 0.90; UIScale.Parent = Main
 do
     local sh = Instance.new("ImageLabel"); sh.BackgroundTransparency = 1; sh.Image = "rbxassetid://6014261993"
     sh.ImageColor3 = Color3.new(0,0,0); sh.ImageTransparency = 0.35; sh.ScaleType = Enum.ScaleType.Slice
@@ -807,12 +807,12 @@ local minimized = false
 track(MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized; Body.Visible = not minimized; Status.Visible = not minimized
     if MinPlusBar then MinPlusBar.Visible = minimized end  -- "-" becomes "+" when minimized
-    TweenService:Create(Main, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Size = minimized and UDim2.fromOffset(765,42) or UDim2.fromOffset(765,525) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Size = minimized and UDim2.fromOffset(918,42) or UDim2.fromOffset(918,630) }):Play()
 end))
 local maximized = false
 track(MaxBtn.MouseButton1Click:Connect(function()
     maximized = not maximized
-    TweenService:Create(Main, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Size = maximized and UDim2.fromOffset(850,580) or UDim2.fromOffset(765,525) }):Play()
+    TweenService:Create(Main, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Size = maximized and UDim2.fromOffset(1000,700) or UDim2.fromOffset(918,630) }):Play()
 end))
 
 --========================== UNLOAD ================================--
