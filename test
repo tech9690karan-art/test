@@ -1,1 +1,21 @@
+-- Get current game information
+local gameId = game.GameId
+local placeId = game.PlaceId
+local jobId = game.JobId
 
+print("Game ID: " .. gameId)
+print("Place ID: " .. placeId)
+print("Job ID: " .. jobId)
+print("Game Name: " .. game:GetService("MarketplaceService"):GetProductInfo(gameId).Name)
+
+-- Display in a nice format
+print(string.format([[
+================================
+GAME INFORMATION
+================================
+Game ID:   %s
+Place ID:  %s
+Job ID:    %s
+Game Name: %s
+================================
+]], gameId, placeId, jobId, game:GetService("MarketplaceService"):GetProductInfo(gameId).Name))
