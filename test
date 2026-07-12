@@ -1,321 +1,899 @@
--- NPC Check-in Script (CheckIn 1 & CheckIn 2)
+-- VEX - NPC Check-in & ESP Script
+repeat task.wait() until game:IsLoaded()
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- CheckIn 1 Config
-local CHECK_POSITION_1 = CFrame.new(-103.87, 3.41, -7.14)
-local RADIUS = 2
+-- Setup themes
+WindUI:AddTheme({
+    Name = "Dark",
+    Accent = "#18181b",
+    Dialog = "#18181b", 
+    Outline = "#FFFFFF",
+    Text = "#FFFFFF",
+    Placeholder = "#999999",
+    Background = "#0e0e10",
+    Button = "#52525b",
+    Icon = "#a1a1aa",
+})
 
--- CheckIn 2 Config
-local CHECK_POSITION_2 = CFrame.new(-91.865051, 3.407531, 8.354979)
+WindUI:AddTheme({
+    Name = "Light",
+    Accent = "#f4f4f5",
+    Dialog = "#f4f4f5",
+    Outline = "#000000", 
+    Text = "#000000",
+    Placeholder = "#666666",
+    Background = "#ffffff",
+    Button = "#e4e4e7",
+    Icon = "#52525b",
+})
 
-local COOLDOWN_TIME = 30
-local Cooldown = {}
+WindUI:AddTheme({
+    Name = "Gray",
+    Accent = "#374151",
+    Dialog = "#374151",
+    Outline = "#d1d5db", 
+    Text = "#f9fafb",
+    Placeholder = "#9ca3af",
+    Background = "#1f2937",
+    Button = "#4b5563",
+    Icon = "#d1d5db",
+})
 
--- Find NPC folder
-local NPCS = nil
-for _, child in ipairs(Workspace:GetChildren()) do
-    if child.Name:lower() == "npc" or child.Name:lower() == "npcs" then
-        NPCS = child
-        break
+WindUI:AddTheme({
+    Name = "Blue",
+    Accent = "#1e40af",
+    Dialog = "#1e3a8a",
+    Outline = "#93c5fd", 
+    Text = "#f0f9ff",
+    Placeholder = "#60a5fa",
+    Background = "#1e293b",
+    Button = "#3b82f6",
+    Icon = "#93c5fd",
+})
+
+WindUI:AddTheme({
+    Name = "Green",
+    Accent = "#059669",
+    Dialog = "#047857",
+    Outline = "#6ee7b7", 
+    Text = "#ecfdf5",
+    Placeholder = "#34d399",
+    Background = "#064e3b",
+    Button = "#10b981",
+    Icon = "#6ee7b7",
+})
+
+WindUI:AddTheme({
+    Name = "Purple",
+    Accent = "#7c3aed",
+    Dialog = "#6d28d9",
+    Outline = "#c4b5fd", 
+    Text = "#faf5ff",
+    Placeholder = "#a78bfa",
+    Background = "#581c87",
+    Button = "#8b5cf6",
+    Icon = "#c4b5fd",
+})
+
+WindUI:SetNotificationLower(true)
+
+-- Get game name
+local MarketplaceService = game:GetService("MarketplaceService")
+local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+
+-- Create Window
+local Window = WindUI:CreateWindow({
+    Title = "VEX - " .. gameName,
+    Author = "Premium Build",
+    Icon = "rbxassetid://86958834463274", 
+    Folder = "Vex " .. gameName,
+    Size = UDim2.fromOffset(500, 350),
+    Transparent = false,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    HideSearchBar = true,
+    ScrollBarEnabled = true,
+})
+
+Window:SetToggleKey(Enum.KeyCode.K)
+
+Window:EditOpenButton({
+    Title = "VEX - Open",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0, 6),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(255, 255, 255)),
+    Draggable = true,
+})
+
+local Tabs = {}
+
+-- DISCORD TAB
+Tabs.Discord = Window:Tab({
+    Title = "Discord",
+    Icon = "users",
+})
+
+Tabs.Discord:Paragraph({
+    Title = "Discord",
+    Desc = "Join our Discord to get more of the best scripts!",
+    Image = "rbxassetid://82233980503615",
+    ImageSize = 30,
+    Thumbnail = "",
+    ThumbnailSize = 0,
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "copy",
+            Title = "Copy Invite",
+            Callback = function()
+                setclipboard("https://discord.gg/FvMePtyJrq")
+                WindUI:Notify({
+                    Title = "Copied!",
+                    Content = "Discord invite copied to clipboard",
+                    Duration = 5,
+                    Icon = "clipboard-check",
+                })
+            end,
+        }
+    }
+})
+
+-- MAIN TAB
+Tabs.Main = Window:Tab({
+    Title = "Main",
+    Icon = "zap",
+})
+
+-- AUTO Section
+Tabs.Main:Section({ Title = "Auto", Icon = "rocket" })
+
+-- Variables for Auto Check-in
+local autoCheckInEnabled = false
+local checkInLoopRunning = false
+
+-- NPC Check-in Script Functions
+local function SetupCheckInSystem()
+    -- Find NPC folder
+    local NPCS = nil
+    for _, child in ipairs(Workspace:GetChildren()) do
+        if child.Name:lower() == "npc" or child.Name:lower() == "npcs" then
+            NPCS = child
+            break
+        end
     end
-end
-
-if not NPCS then
-    print("❌ NPC folder not found")
-    return
-end
-
-print("✅ NPC folder found:", NPCS.Name)
-
--- Find CheckIn 1 folder
-local Misc = Workspace:FindFirstChild("Misc")
-if not Misc then
-    print("❌ Misc folder not found")
-    return
-end
-
-local CheckIn = Misc:FindFirstChild("CheckIn")
-if not CheckIn then
-    print("❌ CheckIn folder not found")
-    return
-end
-
-print("✅ CheckIn folder found")
-
--- Find CheckIn 2 folder
-local CheckIn2 = Misc:FindFirstChild("CheckIn2")
-if not CheckIn2 then
-    print("⚠️ CheckIn2 folder not found, will keep checking...")
-end
-
--- Get all ProximityPrompts for CheckIn 1
-local prompts = {
-    Form = CheckIn:FindFirstChild("Form") and CheckIn.Form:FindFirstChild("PP"),
-    Camera = CheckIn:FindFirstChild("Camera") and CheckIn.Camera:FindFirstChild("PP"),
-    Computer = CheckIn:FindFirstChild("Computer") and CheckIn.Computer:FindFirstChild("PP"),
-    Printer = CheckIn:FindFirstChild("Printer") and CheckIn.Printer:FindFirstChild("PP"),
-    PrintedBadge = CheckIn:FindFirstChild("PrintedBadge") and CheckIn.PrintedBadge:FindFirstChild("PP"),
-}
-
--- Get all ProximityPrompts for CheckIn 2
-local prompts2 = nil
-if CheckIn2 then
-    prompts2 = {
-        Form = CheckIn2:FindFirstChild("Form") and CheckIn2.Form:FindFirstChild("PP"),
-        Camera = CheckIn2:FindFirstChild("Camera") and CheckIn2.Camera:FindFirstChild("PP"),
+    
+    if not NPCS then
+        WindUI:Notify({
+            Title = "❌ Error",
+            Content = "NPC folder not found",
+            Duration = 3,
+            Icon = "alert-circle",
+        })
+        return nil
+    end
+    
+    -- Find Misc folder
+    local Misc = Workspace:FindFirstChild("Misc")
+    if not Misc then
+        WindUI:Notify({
+            Title = "❌ Error",
+            Content = "Misc folder not found",
+            Duration = 3,
+            Icon = "alert-circle",
+        })
+        return nil
+    end
+    
+    local CheckIn = Misc:FindFirstChild("CheckIn")
+    if not CheckIn then
+        WindUI:Notify({
+            Title = "❌ Error",
+            Content = "CheckIn folder not found",
+            Duration = 3,
+            Icon = "alert-circle",
+        })
+        return nil
+    end
+    
+    return {
+        NPCS = NPCS,
+        Misc = Misc,
+        CheckIn = CheckIn,
+        CheckIn2 = Misc:FindFirstChild("CheckIn2")
     }
 end
 
--- Check if all prompts exist for CheckIn 1
-for name, prompt in pairs(prompts) do
-    if not prompt then
-        print("❌ Missing prompt in CheckIn 1:", name)
-        return
-    end
-end
-
-print("✅ All CheckIn 1 prompts found")
-
--- Check if all prompts exist for CheckIn 2
-if CheckIn2 then
-    for name, prompt in pairs(prompts2) do
-        if not prompt then
-            print("❌ Missing prompt in CheckIn 2:", name)
-            return
+local function GetNPCInRadius(checkPosition, radius, npcs)
+    for _, npc in ipairs(npcs:GetChildren()) do
+        if npc:IsA("Model") then
+            local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
+            if root then
+                local dist = (root.Position - checkPosition.Position).Magnitude
+                if dist <= radius then
+                    return npc
+                end
+            end
         end
     end
-    print("✅ All CheckIn 2 prompts found")
+    return nil
 end
 
--- Function to fire a prompt
 local function FirePrompt(prompt)
     if prompt then
-        print("🔥 Firing prompt:", prompt.Parent.Name)
         fireproximityprompt(prompt)
     end
 end
 
--- Function to check if NPC is in radius for CheckIn 1
-local function GetNPCInRadius1()
-    for _, npc in ipairs(NPCS:GetChildren()) do
-        if npc:IsA("Model") then
-            local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
-            if root then
-                local dist = (root.Position - CHECK_POSITION_1.Position).Magnitude
-                if dist <= RADIUS then
-                    print("✅ NPC in CheckIn 1 radius:", npc.Name)
-                    return npc
+local function ProcessCheckIn(npc, checkInFolder, prompts, isCheckIn2)
+    local SKIP_NPCS = {
+        Doctor = true,
+        Barney = true,
+    }
+    
+    -- Check if Skinwalker
+    local isSkinwalker = npc:GetAttribute("Skinwalker")
+    
+    if SKIP_NPCS[npc.Name] then
+        return
+    end
+    
+    if isSkinwalker then
+        WindUI:Notify({
+            Title = "⚠️ Anomalie Detected!",
+            Content = "Please close the shutter!",
+            Duration = 5,
+            Icon = "alert-triangle",
+        })
+        return
+    end
+    
+    -- Process the check-in steps
+    local steps = isCheckIn2 and {"Form", "Camera"} or {"Form", "Camera", "Computer", "Printer", "PrintedBadge"}
+    
+    for _, stepName in ipairs(steps) do
+        local stepObj = checkInFolder:FindFirstChild(stepName)
+        if stepObj then
+            local highlight = stepObj:FindFirstChild("CheckStepHighlight")
+            if highlight then
+                local pp = stepObj:FindFirstChild("PP")
+                if pp then
+                    FirePrompt(pp)
+                    task.wait(0.5)
                 end
             end
         end
     end
-    return nil
+    
+    -- Fire NPC prompt
+    if npc:FindFirstChild("CheckStepHighlight") then
+        local npcPrompt = npc:FindFirstChild("PP")
+        if npcPrompt then
+            FirePrompt(npcPrompt)
+        end
+    end
 end
 
--- Function to check if NPC is in radius for CheckIn 2
-local function GetNPCInRadius2()
-    for _, npc in ipairs(NPCS:GetChildren()) do
-        if npc:IsA("Model") then
-            local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
-            if root then
-                local dist = (root.Position - CHECK_POSITION_2.Position).Magnitude
-                if dist <= RADIUS then
-                    print("✅ NPC in CheckIn 2 radius:", npc.Name)
-                    return npc
+-- Auto Check-in Toggle
+Tabs.Main:Toggle({
+    Title = "Auto Check-in",
+    Value = false,
+    Callback = function(state)
+        autoCheckInEnabled = state
+        
+        if state then
+            checkInLoopRunning = true
+            
+            WindUI:Notify({
+                Title = "✅ Auto Check-in Enabled",
+                Content = "Starting check-in loop...",
+                Duration = 2,
+                Icon = "play",
+            })
+            
+            task.spawn(function()
+                local system = SetupCheckInSystem()
+                if not system then
+                    checkInLoopRunning = false
+                    autoCheckInEnabled = false
+                    return
+                end
+                
+                local CHECK_POSITION_1 = CFrame.new(-103.87, 3.41, -7.14)
+                local CHECK_POSITION_2 = CFrame.new(-91.865051, 3.407531, 8.354979)
+                local RADIUS = 2
+                local COOLDOWN_TIME = 30
+                local Cooldown = {}
+                
+                -- Get prompts for CheckIn 1
+                local prompts1 = {
+                    Form = system.CheckIn:FindFirstChild("Form") and system.CheckIn.Form:FindFirstChild("PP"),
+                    Camera = system.CheckIn:FindFirstChild("Camera") and system.CheckIn.Camera:FindFirstChild("PP"),
+                    Computer = system.CheckIn:FindFirstChild("Computer") and system.CheckIn.Computer:FindFirstChild("PP"),
+                    Printer = system.CheckIn:FindFirstChild("Printer") and system.CheckIn.Printer:FindFirstChild("PP"),
+                    PrintedBadge = system.CheckIn:FindFirstChild("PrintedBadge") and system.CheckIn.PrintedBadge:FindFirstChild("PP"),
+                }
+                
+                -- Check if all prompts exist
+                for name, prompt in pairs(prompts1) do
+                    if not prompt then
+                        WindUI:Notify({
+                            Title = "❌ Error",
+                            Content = "Missing prompt in CheckIn 1: " .. name,
+                            Duration = 3,
+                            Icon = "alert-circle",
+                        })
+                        checkInLoopRunning = false
+                        autoCheckInEnabled = false
+                        return
+                    end
+                end
+                
+                while checkInLoopRunning and autoCheckInEnabled do
+                    -- Clean cooldowns
+                    for npc, t in pairs(Cooldown) do
+                        if tick() - t >= COOLDOWN_TIME then
+                            Cooldown[npc] = nil
+                        end
+                    end
+                    
+                    -- Check CheckIn 1
+                    local npc1 = GetNPCInRadius(CHECK_POSITION_1, RADIUS, system.NPCS)
+                    if npc1 and not Cooldown[npc1] then
+                        ProcessCheckIn(npc1, system.CheckIn, prompts1, false)
+                        Cooldown[npc1] = tick()
+                    end
+                    
+                    -- Check CheckIn 2
+                    if system.CheckIn2 then
+                        local prompts2 = {
+                            Form = system.CheckIn2:FindFirstChild("Form") and system.CheckIn2.Form:FindFirstChild("PP"),
+                            Camera = system.CheckIn2:FindFirstChild("Camera") and system.CheckIn2.Camera:FindFirstChild("PP"),
+                        }
+                        
+                        local npc2 = GetNPCInRadius(CHECK_POSITION_2, RADIUS, system.NPCS)
+                        if npc2 and not Cooldown[npc2] then
+                            ProcessCheckIn(npc2, system.CheckIn2, prompts2, true)
+                            Cooldown[npc2] = tick()
+                        end
+                    end
+                    
+                    task.wait(0.5)
+                end
+            end)
+        else
+            checkInLoopRunning = false
+            WindUI:Notify({
+                Title = "⏹️ Auto Check-in Disabled",
+                Content = "Stopped check-in loop",
+                Duration = 2,
+                Icon = "stop",
+            })
+        end
+    end
+})
+
+-- Auto Drink Coffee Toggle
+local autoDrinkCoffeeEnabled = false
+local coffeeDrinkLoopRunning = false
+
+Tabs.Main:Toggle({
+    Title = "Auto Drink Coffee",
+    Value = false,
+    Callback = function(state)
+        autoDrinkCoffeeEnabled = state
+        
+        if state then
+            coffeeDrinkLoopRunning = true
+            
+            WindUI:Notify({
+                Title = "☕ Auto Drink Coffee Enabled",
+                Content = "Checking inventory for coffee...",
+                Duration = 2,
+                Icon = "coffee",
+            })
+            
+            task.spawn(function()
+                while coffeeDrinkLoopRunning and autoDrinkCoffeeEnabled do
+                    -- Check player inventory for coffee
+                    local inventory = LocalPlayer:FindFirstChild("Inventory")
+                    if inventory then
+                        local coffee = inventory:FindFirstChild("Coffee")
+                        if coffee then
+                            -- Equip coffee
+                            local equipRemote = ReplicatedStorage:FindFirstChild("RemoteEvents") and 
+                                               ReplicatedStorage.RemoteEvents:FindFirstChild("EquipItemHandle")
+                            if equipRemote then
+                                equipRemote:FireServer("FireAllClients", coffee)
+                                task.wait(0.5)
+                                
+                                -- Drink coffee with 3 virtual taps
+                                for i = 1, 3 do
+                                    if not coffeeDrinkLoopRunning or not autoDrinkCoffeeEnabled then
+                                        break
+                                    end
+                                    task.wait(3) -- 3 second delay between taps
+                                    
+                                    -- Virtual tap (mobile/PC)
+                                    local virtualInput = UserInputService:IsKeyDown(Enum.KeyCode.Space) or 
+                                                       UserInputService:IsTouchEnabled()
+                                    -- Simulate tap by firing input events
+                                    local inputBegan = Instance.new("InputBegan")
+                                    inputBegan.UserInputType = Enum.UserInputType.Touch
+                                    UserInputService:GetPropertyChangedSignal("TouchEnabled"):Fire()
+                                    task.wait(0.1)
+                                end
+                                
+                                -- Wait before checking again
+                                task.wait(1)
+                            end
+                        else
+                            -- No coffee found, wait and check again
+                            task.wait(2)
+                        end
+                    else
+                        task.wait(1)
+                    end
+                end
+            end)
+        else
+            coffeeDrinkLoopRunning = false
+            WindUI:Notify({
+                Title = "⏹️ Auto Drink Coffee Disabled",
+                Content = "Stopped checking for coffee",
+                Duration = 2,
+                Icon = "stop",
+            })
+        end
+    end
+})
+
+-- ESP TAB
+Tabs.ESP = Window:Tab({
+    Title = "ESP",
+    Icon = "eye",
+})
+
+-- ESP Variables
+local espAnomaliesEnabled = false
+local espPatientsEnabled = false
+local espHighlights = {}
+local espRunning = false
+
+-- ESP Functions
+local function SetupESP()
+    local NPCS = nil
+    for _, child in ipairs(Workspace:GetChildren()) do
+        if child.Name:lower() == "npc" or child.Name:lower() == "npcs" then
+            NPCS = child
+            break
+        end
+    end
+    
+    if not NPCS then
+        WindUI:Notify({
+            Title = "❌ Error",
+            Content = "NPC folder not found",
+            Duration = 3,
+            Icon = "alert-circle",
+        })
+        return nil
+    end
+    
+    return NPCS
+end
+
+local function CreateHighlight(npc, isAnomaly)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = npc
+    
+    if isAnomaly then
+        highlight.FillColor = Color3.new(1, 0, 0) -- Red for anomalies
+    else
+        highlight.FillColor = Color3.new(0, 1, 0) -- Green for patients
+    end
+    
+    return highlight
+end
+
+local function RemoveHighlight(npc)
+    if espHighlights[npc] then
+        espHighlights[npc]:Destroy()
+        espHighlights[npc] = nil
+    end
+end
+
+local function UpdateESP(npc, isAnomaly, enabled)
+    if not enabled then
+        RemoveHighlight(npc)
+        return
+    end
+    
+    if not espHighlights[npc] then
+        espHighlights[npc] = CreateHighlight(npc, isAnomaly)
+    else
+        -- Update color based on type
+        if isAnomaly then
+            espHighlights[npc].FillColor = Color3.new(1, 0, 0)
+        else
+            espHighlights[npc].FillColor = Color3.new(0, 1, 0)
+        end
+        espHighlights[npc].Enabled = true
+    end
+end
+
+-- ESP Anomalies Toggle
+Tabs.ESP:Toggle({
+    Title = "ESP Anomalies",
+    Desc = "Shows anomalies with red highlight",
+    Value = false,
+    Callback = function(state)
+        espAnomaliesEnabled = state
+        
+        if state then
+            WindUI:Notify({
+                Title = "👁️ ESP Anomalies Enabled",
+                Content = "Highlighting anomalies...",
+                Duration = 2,
+                Icon = "eye",
+            })
+        else
+            WindUI:Notify({
+                Title = "👁️ ESP Anomalies Disabled",
+                Content = "Removed anomaly highlights",
+                Duration = 2,
+                Icon = "eye-off",
+            })
+        end
+        
+        -- Start ESP loop if either is enabled
+        if espAnomaliesEnabled or espPatientsEnabled then
+            if not espRunning then
+                espRunning = true
+                task.spawn(function()
+                    local NPCS = SetupESP()
+                    if not NPCS then
+                        espRunning = false
+                        return
+                    end
+                    
+                    while espRunning and (espAnomaliesEnabled or espPatientsEnabled) do
+                        local currentNPCs = {}
+                        
+                        for _, npc in ipairs(NPCS:GetChildren()) do
+                            if npc:IsA("Model") and npc ~= LocalPlayer.Character then
+                                local root = npc:FindFirstChild("HumanoidRootPart") or 
+                                            npc:FindFirstChild("Head") or 
+                                            npc.PrimaryPart
+                                if root then
+                                    local distance = (root.Position - Workspace.CurrentCamera.CFrame.Position).Magnitude
+                                    if distance <= 1000 then
+                                        currentNPCs[npc] = true
+                                        
+                                        local isSkinwalker = npc:GetAttribute("Skinwalker")
+                                        
+                                        -- Check if this NPC should be shown
+                                        if isSkinwalker and espAnomaliesEnabled then
+                                            UpdateESP(npc, true, true)
+                                        elseif not isSkinwalker and espPatientsEnabled then
+                                            UpdateESP(npc, false, true)
+                                        else
+                                            RemoveHighlight(npc)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        
+                        -- Remove ESP for NPCs no longer in range or not matching filters
+                        for npc, highlight in pairs(espHighlights) do
+                            if not currentNPCs[npc] then
+                                RemoveHighlight(npc)
+                            end
+                        end
+                        
+                        task.wait(0.5)
+                    end
+                    
+                    -- Clean up all highlights when loop ends
+                    for npc, highlight in pairs(espHighlights) do
+                        RemoveHighlight(npc)
+                    end
+                    espRunning = false
+                end)
+            end
+        else
+            -- Disable ESP
+            espRunning = false
+            for npc, highlight in pairs(espHighlights) do
+                RemoveHighlight(npc)
+            end
+        end
+    end
+})
+
+-- ESP Patients Toggle
+Tabs.ESP:Toggle({
+    Title = "ESP Patients",
+    Desc = "Shows patients with green highlight",
+    Value = false,
+    Callback = function(state)
+        espPatientsEnabled = state
+        
+        if state then
+            WindUI:Notify({
+                Title = "👁️ ESP Patients Enabled",
+                Content = "Highlighting patients...",
+                Duration = 2,
+                Icon = "eye",
+            })
+        else
+            WindUI:Notify({
+                Title = "👁️ ESP Patients Disabled",
+                Content = "Removed patient highlights",
+                Duration = 2,
+                Icon = "eye-off",
+            })
+        end
+        
+        -- Start ESP loop if either is enabled
+        if espAnomaliesEnabled or espPatientsEnabled then
+            if not espRunning then
+                espRunning = true
+                task.spawn(function()
+                    local NPCS = SetupESP()
+                    if not NPCS then
+                        espRunning = false
+                        return
+                    end
+                    
+                    while espRunning and (espAnomaliesEnabled or espPatientsEnabled) do
+                        local currentNPCs = {}
+                        
+                        for _, npc in ipairs(NPCS:GetChildren()) do
+                            if npc:IsA("Model") and npc ~= LocalPlayer.Character then
+                                local root = npc:FindFirstChild("HumanoidRootPart") or 
+                                            npc:FindFirstChild("Head") or 
+                                            npc.PrimaryPart
+                                if root then
+                                    local distance = (root.Position - Workspace.CurrentCamera.CFrame.Position).Magnitude
+                                    if distance <= 1000 then
+                                        currentNPCs[npc] = true
+                                        
+                                        local isSkinwalker = npc:GetAttribute("Skinwalker")
+                                        
+                                        if isSkinwalker and espAnomaliesEnabled then
+                                            UpdateESP(npc, true, true)
+                                        elseif not isSkinwalker and espPatientsEnabled then
+                                            UpdateESP(npc, false, true)
+                                        else
+                                            RemoveHighlight(npc)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        
+                        for npc, highlight in pairs(espHighlights) do
+                            if not currentNPCs[npc] then
+                                RemoveHighlight(npc)
+                            end
+                        end
+                        
+                        task.wait(0.5)
+                    end
+                    
+                    for npc, highlight in pairs(espHighlights) do
+                        RemoveHighlight(npc)
+                    end
+                    espRunning = false
+                end)
+            end
+        else
+            if not espAnomaliesEnabled then
+                espRunning = false
+                for npc, highlight in pairs(espHighlights) do
+                    RemoveHighlight(npc)
                 end
             end
         end
     end
-    return nil
-end
+})
 
-local SKIP_NPCS = {
-    Doctor = true,
-    Barney = true,
-}
+-- BRING ITEMS TAB
+Tabs.Bring = Window:Tab({
+    Title = "Bring Items",
+    Icon = "package",
+})
 
--- Function to process CheckIn 1
-local function ProcessCheckIn1(npc)
-    print("🔍 Processing NPC in CheckIn 1:", npc.Name)
+-- Function for bringing items
+local function BringItem(cframe, promptPath, itemName)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then
+        WindUI:Notify({
+            Title = "❌ Error",
+            Content = "Character not found",
+            Duration = 2,
+            Icon = "alert-circle",
+        })
+        return
+    end
     
-    -- Check if Skinwalker attribute is enabled
-    local isSkinwalker = npc:GetAttribute("Skinwalker")
+    -- Save initial position
+    local initialCFrame = root.CFrame
     
-    if SKIP_NPCS[npc.Name] then
-        print("⏭️ Permanently skipping:", npc.Name)
-    elseif not isSkinwalker then
-        -- Wait for Form to exist before checking it
-        local Form = CheckIn:WaitForChild("Form")
+    -- Teleport to item
+    root.CFrame = cframe
+    task.wait(0.5)
+    
+    -- Find and fire prompt
+    local success, prompt = pcall(function()
+        return Workspace:WaitForChild(promptPath[1], 3):WaitForChild(promptPath[2], 3):WaitForChild(promptPath[3], 3)
+    end)
+    
+    if success and prompt then
+        fireproximityprompt(prompt)
         
-        print("⏳ Waiting for Form CheckStepHighlight...")
-        Form:WaitForChild("CheckStepHighlight")
-        print("✅ Form CheckStepHighlight found")
-        FirePrompt(Form:WaitForChild("PP"))
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Camera CheckStepHighlight...")
-        CheckIn.Camera:WaitForChild("CheckStepHighlight")
-        print("✅ Camera CheckStepHighlight found")
-        FirePrompt(prompts.Camera)
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Computer CheckStepHighlight...")
-        CheckIn.Computer:WaitForChild("CheckStepHighlight")
-        print("✅ Computer CheckStepHighlight found")
-        FirePrompt(prompts.Computer)
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Printer CheckStepHighlight...")
-        CheckIn.Printer:WaitForChild("CheckStepHighlight")
-        print("✅ Printer CheckStepHighlight found")
-        FirePrompt(prompts.Printer)
-        task.wait(0.5)
-        
-        -- Wait for PrintedBadge to exist before checking it
-        local PrintedBadge = CheckIn:WaitForChild("PrintedBadge")
-        
-        print("⏳ Waiting for PrintedBadge CheckStepHighlight...")
-        PrintedBadge:WaitForChild("CheckStepHighlight")
-        print("✅ PrintedBadge CheckStepHighlight found")
-        FirePrompt(PrintedBadge:WaitForChild("PP"))
-        task.wait(0.5)
-        
-        -- Fire the NPC's own prompt only if CheckStepHighlight exists
-        if npc:FindFirstChild("CheckStepHighlight") then
-            print("✅ NPC CheckStepHighlight found")
-            
-            local npcPrompt = npc:FindFirstChild("PP")
-            if npcPrompt then
-                print("🔥 Firing NPC prompt:", npc.Name)
-                fireproximityprompt(npcPrompt)
-            else
-                print("❌ NPC prompt not found for:", npc.Name)
-            end
-        else
-            print("⏭️ NPC CheckStepHighlight not found for:", npc.Name)
-        end
-        
-        -- Put NPC on cooldown
-        Cooldown[npc] = tick()
-        print("⏱️ Added cooldown for:", npc.Name)
+        WindUI:Notify({
+            Title = "✅ " .. itemName .. " Collected",
+            Content = "Item brought successfully",
+            Duration = 2,
+            Icon = "check",
+        })
     else
-        print("⏭️ NPC is a Skinwalker, skipping:", npc.Name)
-    end
-end
-
--- Function to process CheckIn 2
-local function ProcessCheckIn2(npc)
-    print("🔍 Processing NPC in CheckIn 2:", npc.Name)
-    
-    -- Check if Skinwalker attribute is enabled
-    local isSkinwalker = npc:GetAttribute("Skinwalker")
-    
-    if SKIP_NPCS[npc.Name] then
-        print("⏭️ Permanently skipping:", npc.Name)
-    elseif not isSkinwalker then
-        -- Wait for Form to exist before checking it
-        local Form = CheckIn2:WaitForChild("Form")
-        
-        print("⏳ Waiting for Form CheckStepHighlight (CheckIn 2)...")
-        Form:WaitForChild("CheckStepHighlight")
-        print("✅ Form CheckStepHighlight found (CheckIn 2)")
-        FirePrompt(Form:WaitForChild("PP"))
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Camera CheckStepHighlight (CheckIn 2)...")
-        CheckIn2.Camera:WaitForChild("CheckStepHighlight")
-        print("✅ Camera CheckStepHighlight found (CheckIn 2)")
-        FirePrompt(prompts2.Camera)
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Computer CheckStepHighlight...")
-        CheckIn.Computer:WaitForChild("CheckStepHighlight")
-        print("✅ Computer CheckStepHighlight found")
-        FirePrompt(prompts.Computer)
-        task.wait(0.5)
-        
-        print("⏳ Waiting for Printer CheckStepHighlight...")
-        CheckIn.Printer:WaitForChild("CheckStepHighlight")
-        print("✅ Printer CheckStepHighlight found")
-        FirePrompt(prompts.Printer)
-        task.wait(0.5)
-        
-        -- Wait for PrintedBadge to exist before checking it
-        local PrintedBadge = CheckIn:WaitForChild("PrintedBadge")
-        
-        print("⏳ Waiting for PrintedBadge CheckStepHighlight...")
-        PrintedBadge:WaitForChild("CheckStepHighlight")
-        print("✅ PrintedBadge CheckStepHighlight found")
-        FirePrompt(PrintedBadge:WaitForChild("PP"))
-        task.wait(0.5)
-        
-        -- Fire the NPC's own prompt only if CheckStepHighlight exists
-        if npc:FindFirstChild("CheckStepHighlight") then
-            print("✅ NPC CheckStepHighlight found")
-            
-            local npcPrompt = npc:FindFirstChild("PP")
-            if npcPrompt then
-                print("🔥 Firing NPC prompt:", npc.Name)
-                fireproximityprompt(npcPrompt)
-            else
-                print("❌ NPC prompt not found for:", npc.Name)
-            end
-        else
-            print("⏭️ NPC CheckStepHighlight not found for:", npc.Name)
-        end
-        
-        -- Put NPC on cooldown
-        Cooldown[npc] = tick()
-        print("⏱️ Added cooldown for:", npc.Name)
-    else
-        print("⏭️ NPC is a Skinwalker, skipping:", npc.Name)
-    end
-end
-
-print("🚀 Script started (CheckIn 1 & CheckIn 2)")
-
--- Main loop
-while true do
-    -- Clean up cooldowns older than 30 seconds
-    for npc, t in pairs(Cooldown) do
-        if tick() - t >= COOLDOWN_TIME then
-            Cooldown[npc] = nil
-            print("🧹 Removed cooldown for:", npc.Name)
-        end
-    end
-    
-    -- Check for NPC in CheckIn 1 radius
-    local npc1 = GetNPCInRadius1()
-    if npc1 then
-        if Cooldown[npc1] then
-            print("⏭️ NPC on cooldown:", npc1.Name)
-        else
-            ProcessCheckIn1(npc1)
-        end
-    end
-    
-    -- Check for CheckIn 2 folder and NPC in CheckIn 2 radius
-    if not CheckIn2 then
-        CheckIn2 = Misc:FindFirstChild("CheckIn2")
-        if CheckIn2 then
-            print("✅ CheckIn2 folder found")
-            prompts2 = {
-                Form = CheckIn2:FindFirstChild("Form") and CheckIn2.Form:FindFirstChild("PP"),
-                Camera = CheckIn2:FindFirstChild("Camera") and CheckIn2.Camera:FindFirstChild("PP"),
-            }
-        end
-    end
-    
-    if CheckIn2 then
-        local npc2 = GetNPCInRadius2()
-        if npc2 then
-            if Cooldown[npc2] then
-                print("⏭️ NPC on cooldown:", npc2.Name)
-            else
-                ProcessCheckIn2(npc2)
-            end
-        end
+        WindUI:Notify({
+            Title = "❌ Failed",
+            Content = "Could not find " .. itemName,
+            Duration = 2,
+            Icon = "alert-circle",
+        })
     end
     
     task.wait(0.5)
+    
+    -- Teleport back
+    root.CFrame = initialCFrame
 end
+
+-- Treatment Stuff Section
+Tabs.Bring:Section({ Title = "Treatment Stuff", Icon = "briefcase" })
+
+-- Define item configurations
+local treatmentItems = {
+    { name = "Eye Drops", cframe = CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418), path = { "Items", "Eye Drops", "PP" } },
+    { name = "IV Drops", cframe = CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418), path = { "Items", "IV Drops", "PP" } },
+    { name = "Medkit", cframe = CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414), path = { "Items", "Medkit", "PP" } },
+    { name = "Thermo", cframe = CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414), path = { "Items", "Thermo", "PP" } },
+    { name = "Bandages", cframe = CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906), path = { "Items", "Bandages", "PP" } },
+    { name = "Ointment", cframe = CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906), path = { "Items", "Ointment", "PP" } },
+    { name = "Cough Syrup", cframe = CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188), path = { "Items", "Cough Syrup", "PP" } },
+    { name = "Maple Syrup", cframe = CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188), path = { "Items", "Maple Syrup", "PP" } },
+    { name = "Herbs", cframe = CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594), path = { "Items", "Herbs", "PP" } },
+    { name = "Medicine", cframe = CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594), path = { "Items", "Medicine", "PP" } },
+}
+
+-- Create buttons for each item
+for _, item in ipairs(treatmentItems) do
+    Tabs.Bring:Button({
+        Title = "Bring " .. item.name,
+        Locked = false,
+        Callback = function()
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local root = character:FindFirstChild("HumanoidRootPart")
+            if not root then
+                WindUI:Notify({
+                    Title = "❌ Error",
+                    Content = "Character not found",
+                    Duration = 2,
+                    Icon = "alert-circle",
+                })
+                return
+            end
+            
+            local initialCFrame = root.CFrame
+            root.CFrame = item.cframe
+            task.wait(0.5)
+            
+            -- Try to find the prompt
+            local success, prompt = pcall(function()
+                local misc = Workspace:FindFirstChild("Misc")
+                if not misc then return nil end
+                
+                local items = misc:FindFirstChild("Items")
+                if not items then return nil end
+                
+                local itemObj = items:FindFirstChild(item.name)
+                if not itemObj then return nil end
+                
+                return itemObj:FindFirstChild("PP")
+            end)
+            
+            if success and prompt then
+                fireproximityprompt(prompt)
+                WindUI:Notify({
+                    Title = "✅ " .. item.name .. " Collected",
+                    Content = "Item brought successfully",
+                    Duration = 2,
+                    Icon = "check",
+                })
+            else
+                WindUI:Notify({
+                    Title = "❌ Failed",
+                    Content = "Could not find " .. item.name,
+                    Duration = 2,
+                    Icon = "alert-circle",
+                })
+            end
+            
+            task.wait(0.5)
+            root.CFrame = initialCFrame
+        end
+    })
+end
+
+-- Others Section
+Tabs.Bring:Section({ Title = "Others", Icon = "more-horizontal" })
+
+-- Bring Coffee Button
+Tabs.Bring:Button({
+    Title = "Bring Coffee",
+    Locked = false,
+    Callback = function()
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        
+        -- Save initial position
+        local initialCFrame = root.CFrame
+        
+        -- Teleport to coffee machine
+        root.CFrame = CFrame.new(-120.53153991699219, 3.4125311374664307, 9.277679443359375)
+        task.wait(0.5)
+        
+        -- Fire prompt
+        local success, result = pcall(function()
+            local CoffeeMachine = Workspace:WaitForChild("Misc"):WaitForChild("CoffeeMachine")
+            local Coffee = CoffeeMachine:WaitForChild("Coffee")
+            return Coffee:WaitForChild("PP")
+        end)
+        
+        if success and result then
+            fireproximityprompt(result)
+            WindUI:Notify({
+                Title = "☕ Coffee Collected",
+                Content = "Coffee brought successfully",
+                Duration = 2,
+                Icon = "coffee",
+            })
+        else
+            WindUI:Notify({
+                Title = "❌ Failed",
+                Content = "Could not find coffee",
+                Duration = 2,
+                Icon = "alert-circle",
+            })
+        end
+        
+        task.wait(0.5)
+        root.CFrame = initialCFrame
+    end
+})
+
+-- Select first tab
+Window:SelectTab(1)
+
+print("✅ Script loaded successfully!")
