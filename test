@@ -519,34 +519,56 @@ Tabs.Main:Toggle({
                             task.wait(0.5)
                             
                             -- Drink coffee with 3 virtual taps
-                            local isMobile = UserInputService.TouchEnabled
+                            local viewport = workspace.CurrentCamera.ViewportSize
+                            local x = viewport.X / 2
+                            local y = viewport.Y / 2
                             
-                            if isMobile then
-                                -- Mobile taps
+                            if UserInputService.TouchEnabled then
+                                -- Mobile
                                 for i = 1, 3 do
                                     VirtualInputManager:SendTouchEvent(
-                                        VirtualInputManager:GetLastTouchPosition(),
+                                        x,
+                                        y,
                                         0,
-                                        true,
-                                        game,
-                                        nil
+                                        Enum.UserInputState.Begin,
+                                        game
                                     )
-                                    task.wait(0.1)
+                            
+                                    task.wait(0.05)
+                            
                                     VirtualInputManager:SendTouchEvent(
-                                        VirtualInputManager:GetLastTouchPosition(),
+                                        x,
+                                        y,
                                         0,
-                                        false,
-                                        game,
-                                        nil
+                                        Enum.UserInputState.End,
+                                        game
                                     )
+                            
                                     task.wait(3)
                                 end
                             else
-                                -- PC clicks
+                                -- PC
                                 for i = 1, 3 do
-                                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                                    task.wait(0.1)
-                                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                                    VirtualInputManager:SendMouseButtonEvent(
+                                        x,
+                                        y,
+                                        0,
+                                        true,
+                                        game,
+                                        0
+                                    )
+                            
+                                    task.wait(0.05)
+                            
+                                    VirtualInputManager:SendMouseButtonEvent(
+                                        x,
+                                        y,
+                                        0,
+                                        false,
+                                        game,
+                                        0
+                                    )
+                            
                                     task.wait(3)
                                 end
                             end
@@ -753,8 +775,17 @@ Tabs.Bring = Window:Tab({
     Icon = "package",
 })
 
+local function FindItemPrompt(itemName)
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") and obj.Parent and obj.Parent.Name == itemName then
+            return obj
+        end
+    end
+    return nil
+end
+
 -- Function to teleport, fire prompt, and return
-local function bringItem(targetCFrame, itemPath)
+local function bringItem(targetCFrame, prompt)
     local character = LocalPlayer.Character
     if not character then
         WindUI:Notify({
@@ -785,14 +816,12 @@ local function bringItem(targetCFrame, itemPath)
     task.wait(0.5)
     
     -- Fire prompt
-    pcall(function()
-        local item = itemPath
-        if item then
-            local pp = item:WaitForChild("PP")
-            fireproximityprompt(pp)
-            print("✅ Prompt fired")
-        end
-    end)
+    if prompt then
+        fireproximityprompt(prompt)
+        print("✅ Prompt fired")
+    else
+        warn("Prompt not found")
+    end
     
     task.wait(0.5)
     
@@ -809,7 +838,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
-            Workspace:GetChildren()[146].Items["Eye Drops"]
+            FindItemPrompt("Eye Drops")
         )
     end
 })
@@ -820,7 +849,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
-            Workspace:GetChildren()[146].Items["IV Drops"]
+            FindItemPrompt("IV Drops")
         )
     end
 })
@@ -831,7 +860,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
-            Workspace:GetChildren()[145].Items.Medkit
+            FindItemPrompt("Medkit")
         )
     end
 })
@@ -842,7 +871,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
-            Workspace:GetChildren()[145].Items.Thermo
+            FindItemPrompt("Thermo")
         )
     end
 })
@@ -853,7 +882,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
-            Workspace:GetChildren()[144].Items.Bandages
+            FindItemPrompt("Bandages")
         )
     end
 })
@@ -864,7 +893,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
-            Workspace:GetChildren()[144].Items.Ointment
+            FindItemPrompt("Ointment")
         )
     end
 })
@@ -875,7 +904,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
-            Workspace:GetChildren()[143].Items["Cough Syrup"]
+            FindItemPrompt("Cough Syrup")
         )
     end
 })
@@ -886,7 +915,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
-            Workspace:GetChildren()[143].Items["Maple Syrup"]
+            FindItemPrompt("Maple Syrup")
         )
     end
 })
@@ -897,7 +926,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
-            Workspace:GetChildren()[142].Items.Herbs
+            FindItemPrompt("Herbs")
         )
     end
 })
@@ -908,7 +937,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
-            Workspace:GetChildren()[142].Items.Medicine
+            FindItemPrompt("Medicine")
         )
     end
 })
