@@ -695,50 +695,55 @@ local function FindItemPrompt(itemName)
     return nil
 end
 
--- Function to teleport, fire prompt, and return
 local function bringItem(targetCFrame, prompt)
     local character = LocalPlayer.Character
     if not character then
-        WindUI:Notify({
-            Title = "Error",
-            Content = "Character not found",
-            Duration = 3,
-            Icon = "alert-triangle",
-        })
+        warn("❌ Character not found")
         return
     end
-    
+
     local root = character:FindFirstChild("HumanoidRootPart")
     if not root then
-        WindUI:Notify({
-            Title = "Error",
-            Content = "HumanoidRootPart not found",
-            Duration = 3,
-            Icon = "alert-triangle",
-        })
+        warn("❌ HumanoidRootPart not found")
         return
     end
-    
-    -- Save initial position
+
     local initialCFrame = root.CFrame
-    
-    -- Teleport to target
-    root.CFrame = targetCFrame
-    task.wait(0.5)
-    
-    -- Fire prompt
+
+    print("========================================")
+    print("📦 Starting Bring Item")
+
     if prompt then
-        fireproximityprompt(prompt)
-        print("✅ Prompt fired")
+        print("✅ Prompt Found")
+        print("📍 Prompt Path:", prompt:GetFullName())
+        print("📌 Parent:", prompt.Parent:GetFullName())
+        print("🟢 Enabled:", prompt.Enabled)
+        print("📏 MaxDistance:", prompt.MaxActivationDistance)
+        print("⏱ HoldDuration:", prompt.HoldDuration)
+        print("👀 LineOfSight:", prompt.RequiresLineOfSight)
     else
-        warn("Prompt not found")
+        warn("❌ Prompt is NIL")
+        return
     end
-    
+
+    print("🚀 Teleporting...")
+    root.CFrame = targetCFrame
+
     task.wait(0.5)
-    
-    -- Teleport back
+
+    print("📏 Distance to Prompt:",
+        (root.Position - prompt.Parent.Position).Magnitude)
+
+    print("🔥 Firing Prompt...")
+    fireproximityprompt(prompt)
+    print("✅ fireproximityprompt() called")
+
+    task.wait(0.5)
+
+    print("↩ Returning...")
     root.CFrame = initialCFrame
-    print("✅ Teleported back")
+
+    print("========================================")
 end
 
 Tabs.Bring:Section({ Title = "Treatment Stuff", Icon = "heart" })
