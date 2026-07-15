@@ -681,16 +681,17 @@ Tabs.Bring = Window:Tab({
 
 local function FindItemPrompt(itemName)
     for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("Folder") and obj.Name == "Items" then
-            local item = obj:FindFirstChild(itemName)
-            if item then
-                local pp = item:FindFirstChild("PP")
-                if pp then
-                    return pp
-                end
-            end
+        if obj:IsA("ProximityPrompt")
+            and obj.Name == "PP"
+            and obj.Parent
+            and obj.Parent.Name == itemName
+            and obj.Parent.Parent
+            and obj.Parent.Parent.Name == "Items" then
+
+            return obj
         end
     end
+
     return nil
 end
 
