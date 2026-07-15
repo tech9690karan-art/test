@@ -679,8 +679,9 @@ Tabs.Bring = Window:Tab({
     Icon = "package",
 })
 
-local function FindItemPrompt(itemName)
-    local prompts = {}
+local function FindItemPrompt(itemName, targetCFrame)
+    local closestPrompt = nil
+    local closestDistance = math.huge
 
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("Folder") and obj.Name == "Items" then
@@ -688,17 +689,22 @@ local function FindItemPrompt(itemName)
             if item then
                 local pp = item:FindFirstChild("PP")
                 if pp then
-                    table.insert(prompts, pp)
+                    local distance = (pp.Parent:GetPivot().Position - targetCFrame.Position).Magnitude
+
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPrompt = pp
+                    end
                 end
             end
         end
     end
 
-    return prompts
+    return closestPrompt
 end
 
 -- Function to teleport, fire prompt, and return
-local function bringItem(targetCFrame, prompts)
+local function bringItem(targetCFrame, itemName)
     local character = LocalPlayer.Character
     if not character then
         WindUI:Notify({
@@ -721,37 +727,27 @@ local function bringItem(targetCFrame, prompts)
         return
     end
 
+    local prompt = FindItemPrompt(itemName, targetCFrame)
+
+    if not prompt then
+        warn("❌ Prompt not found:", itemName)
+        return
+    end
+
+    -- Save initial position
     local initialCFrame = root.CFrame
 
+    -- Teleport to target
     root.CFrame = targetCFrame
     task.wait(0.5)
 
-    if prompts and #prompts > 0 then
-        local fired = false
-
-        for _, prompt in ipairs(prompts) do
-            pcall(function()
-                fireproximityprompt(prompt)
-            end)
-
-            task.wait(0.2)
-
-            if character:FindFirstChildOfClass("Tool") then
-                fired = true
-                print("✅ Picked up using:", prompt:GetFullName())
-                break
-            end
-        end
-
-        if not fired then
-            warn("❌ None of the prompts gave the item.")
-        end
-    else
-        warn("❌ Prompt not found")
-    end
+    -- Fire prompt
+    fireproximityprompt(prompt)
+    print("✅ Prompt fired:", prompt:GetFullName())
 
     task.wait(0.5)
 
+    -- Teleport back
     root.CFrame = initialCFrame
     print("✅ Teleported back")
 end
@@ -764,7 +760,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
-            FindItemPrompt("Eye Drops")
+            "Eye Drops"
         )
     end
 })
@@ -775,7 +771,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
-            FindItemPrompt("IV Drops")
+            "IV Drops"
         )
     end
 })
@@ -786,7 +782,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
-            FindItemPrompt("Medkit")
+            "Medkit"
         )
     end
 })
@@ -797,7 +793,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
-            FindItemPrompt("Thermo")
+            "Thermo"
         )
     end
 })
@@ -808,7 +804,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
-            FindItemPrompt("Bandages")
+            "Bandages"
         )
     end
 })
@@ -819,7 +815,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
-            FindItemPrompt("Ointment")
+            "Ointment"
         )
     end
 })
@@ -830,7 +826,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
-            FindItemPrompt("Cough Syrup")
+            "Cough Syrup"
         )
     end
 })
@@ -841,7 +837,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
-            FindItemPrompt("Maple Syrup")
+            "Maple Syrup"
         )
     end
 })
@@ -852,7 +848,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
-            FindItemPrompt("Herbs")
+            "Herbs"
         )
     end
 })
@@ -863,7 +859,7 @@ Tabs.Bring:Button({
     Callback = function()
         bringItem(
             CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
-            FindItemPrompt("Medicine")
+            "Medicine"
         )
     end
 })
