@@ -8,8 +8,12 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+
+-- Get the game name dynamically
+local MarketplaceService = game:GetService("MarketplaceService")
+local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
 
 -- Themes
 WindUI:AddTheme({
@@ -38,28 +42,23 @@ WindUI:AddTheme({
 
 -- Window
 local Window = WindUI:CreateWindow({
-    Title = "Hospital Script",
+    Title = "VEX - " .. gameName,
     Author = "Premium Build",
+    Folder = "Vex_Animal_Hospital",
     Icon = "rbxassetid://86958834463274",
     Size = UDim2.fromOffset(500, 350),
     Transparent = false,
     Theme = "Dark",
     Resizable = true,
     SideBarWidth = 200,
-    HideSearchBar = true,
+    HideSearchBar = false,
     ScrollBarEnabled = true,
+    OpenButton = {
+        Enabled = false,
+    }
 })
 
 Window:SetToggleKey(Enum.KeyCode.K)
-
-Window:EditOpenButton({
-    Title = "Hospital - Open",
-    Icon = "monitor",
-    CornerRadius = UDim.new(0, 6),
-    StrokeThickness = 2,
-    Color = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(255, 255, 255)),
-    Draggable = true,
-})
 
 local Tabs = {}
 
@@ -69,30 +68,44 @@ Tabs.Discord = Window:Tab({
     Icon = "users",
 })
 
-local Discord = Tabs.Discord:Paragraph({
-    Title = "Discord",
-    Desc = "Join our Discord to get more of the best scripts!",
+Tabs.Discord:Paragraph({
+    Title = "Welcome to VEX Scripts!",
+    Desc = "Get the latest scripts, updates, announcements, and support by joining our Discord community.",
     Image = "rbxassetid://82233980503615",
-    ImageSize = 30,
-    Thumbnail = "",
-    ThumbnailSize = 0,
-    Locked = false,
+    ImageSize = 60,
+    Color = "Red",
     Buttons = {
         {
-            Icon = "copy",
-            Title = "Copy Invite",
+            Title = "Join Discord",
+            Icon = "geist:logo-discord",
             Callback = function()
-                setclipboard("https://discord.gg/FvMePtyJrq")
-                WindUI:Notify({
-                    Title = "Copied!",
-                    Content = "Discord invite copied to clipboard",
-                    Duration = 5,
-                    Icon = "clipboard-check",
-                })
-            end,
+                if setclipboard then
+                    setclipboard("https://discord.gg/FvMePtyJrq")
+
+                    Window:Dialog({
+                        Title = "Discord Link Copied",
+                        Icon = "geist:logo-discord",
+                        Content = "The Discord invite link has been copied to your clipboard.",
+                        Buttons = {
+                            {
+                                Title = "OK",
+                                Icon = "check"
+                            }
+                        }
+                    })
+                else
+                    WindUI:Notify({
+                        Title = "Clipboard Not Supported",
+                        Content = "Your executor doesn't support copying to the clipboard.",
+                        Duration = 4,
+                        Icon = "alert-triangle",
+                    })
+                end
+            end
         }
     }
 })
+
 
 -- Main Tab
 Tabs.Main = Window:Tab({
@@ -105,6 +118,7 @@ Tabs.Main:Section({ Title = "Auto", Icon = "rocket" })
 -- Auto Check-in Toggle
 local autoCheckInEnabled = false
 local checkInLoop = nil
+local AUTO_CHECKIN_POS = CFrame.new(-104.62301635742188, 3.4125311374664307, 6.181607246398926)
 
 Tabs.Main:Toggle({
     Title = "Auto Check In",
@@ -260,8 +274,8 @@ Tabs.Main:Toggle({
                     
                     if isSkinwalker then
                         WindUI:Notify({
-                            Title = "⚠️ Anomalie Detected!",
-                            Content = "Anomalie detected, please close the shutter!",
+                            Title = "⚠️ Anomaly Detected!",
+                            Content = "Anomaly detected, please close the shutter!",
                             Duration = 5,
                             Icon = "alert-triangle",
                         })
@@ -408,7 +422,20 @@ Tabs.Main:Toggle({
                 end
                 
                 print("🚀 Script started (CheckIn 1 & CheckIn 2)")
-                
+
+                task.spawn(function()
+                    while autoCheckInEnabled do
+                        local character = LocalPlayer.Character
+                        if character then
+                            local root = character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                root.CFrame = AUTO_CHECKIN_POS
+                            end
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+                        
                 -- Main loop
                 while autoCheckInEnabled do
                     -- Clean up cooldowns older than 30 seconds
@@ -463,129 +490,6 @@ Tabs.Main:Toggle({
             WindUI:Notify({
                 Title = "Auto Check In",
                 Content = "Auto Check In Disabled",
-                Duration = 3,
-                Icon = "x-circle",
-            })
-        end
-    end
-})
-
--- Auto Drink Coffee Toggle
-local autoDrinkCoffeeEnabled = false
-local coffeeLoop = nil
-
-Tabs.Main:Toggle({
-    Title = "Auto Drink Coffee",
-    Value = false,
-    Callback = function(state)
-        autoDrinkCoffeeEnabled = state
-        
-        if state then
-            WindUI:Notify({
-                Title = "Auto Drink Coffee",
-                Content = "Auto Drink Coffee Enabled",
-                Duration = 3,
-                Icon = "coffee",
-            })
-            
-            coffeeLoop = task.spawn(function()
-                while autoDrinkCoffeeEnabled do
-                    local character = LocalPlayer.Character
-                    if not character then
-                        task.wait(1)
-                        continue
-                    end
-                    
-                    local backpack = LocalPlayer:FindFirstChild("Backpack")
-                    local inventory = character:FindFirstChild("Inventory")
-                    
-                    local coffeeItem = nil
-                    
-                    -- Check backpack
-                    if backpack then
-                        coffeeItem = backpack:FindFirstChild("Coffee")
-                    end
-                    
-                    -- Check inventory if not found in backpack
-                    if not coffeeItem and inventory then
-                        coffeeItem = inventory:FindFirstChild("Coffee")
-                    end
-                    
-                    if coffeeItem then
-                        -- Equip coffee
-                        local humanoid = character:FindFirstChildOfClass("Humanoid")
-                        if humanoid then
-                            humanoid:EquipTool(coffeeItem)
-                            task.wait(0.5)
-                            
-                            -- Drink coffee with 3 virtual taps
-                            local viewport = workspace.CurrentCamera.ViewportSize
-                            local x = viewport.X / 2
-                            local y = viewport.Y / 2
-                            
-                            if UserInputService.TouchEnabled then
-                                -- Mobile
-                                for i = 1, 3 do
-                                    VirtualInputManager:SendTouchEvent(
-                                        x,
-                                        y,
-                                        0,
-                                        Enum.UserInputState.Begin,
-                                        game
-                                    )
-                            
-                                    task.wait(0.05)
-                            
-                                    VirtualInputManager:SendTouchEvent(
-                                        x,
-                                        y,
-                                        0,
-                                        Enum.UserInputState.End,
-                                        game
-                                    )
-                            
-                                    task.wait(3)
-                                end
-                            else
-                                -- PC
-                                for i = 1, 3 do
-                                    VirtualInputManager:SendMouseButtonEvent(
-                                        x,
-                                        y,
-                                        0,
-                                        true,
-                                        game,
-                                        0
-                                    )
-                            
-                                    task.wait(0.05)
-                            
-                                    VirtualInputManager:SendMouseButtonEvent(
-                                        x,
-                                        y,
-                                        0,
-                                        false,
-                                        game,
-                                        0
-                                    )
-                            
-                                    task.wait(3)
-                                end
-                            end
-                        end
-                    end
-                    
-                    task.wait(1)
-                end
-            end)
-        else
-            if coffeeLoop then
-                autoDrinkCoffeeEnabled = false
-                coffeeLoop = nil
-            end
-            WindUI:Notify({
-                Title = "Auto Drink Coffee",
-                Content = "Auto Drink Coffee Disabled",
                 Duration = 3,
                 Icon = "x-circle",
             })
@@ -777,9 +681,14 @@ Tabs.Bring = Window:Tab({
 
 local function FindItemPrompt(itemName)
     for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") and obj.Parent and obj.Parent.Name == itemName then
-            print(obj:GetFullName())
-            return obj
+        if obj:IsA("Folder") and obj.Name == "Items" then
+            local item = obj:FindFirstChild(itemName)
+            if item then
+                local pp = item:FindFirstChild("PP")
+                if pp then
+                    return pp
+                end
+            end
         end
     end
     return nil
@@ -983,3 +892,95 @@ Tabs.Bring:Button({
 
 -- Select first tab
 Window:SelectTab(1)
+
+-- Floating Open/Close Button
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HospitalFloatingButton"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
+
+local ImageButton = Instance.new("ImageButton")
+ImageButton.Parent = ScreenGui
+ImageButton.Size = UDim2.new(0, 65, 0, 65)
+ImageButton.Position = UDim2.new(0, 100, 1, -300)
+ImageButton.BackgroundTransparency = 1
+ImageButton.Image = "rbxassetid://82233980503615"
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = ImageButton
+
+local WindowOpen = true
+
+ImageButton.MouseButton1Click:Connect(function()
+
+    local shrink = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,55,0,55)}
+    )
+
+    local grow = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,65,0,65)}
+    )
+
+    shrink:Play()
+    shrink.Completed:Wait()
+    grow:Play()
+
+    if WindowOpen then
+        Window:Close()
+    else
+        Window:Open()
+    end
+
+    WindowOpen = not WindowOpen
+end)
+
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function UpdateDrag(input)
+    local delta = input.Position - dragStart
+
+    ImageButton.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+ImageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPos = ImageButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+ImageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        UpdateDrag(input)
+    end
+end)
