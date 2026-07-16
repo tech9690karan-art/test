@@ -115,6 +115,20 @@ Tabs.Main = Window:Tab({
 
 Tabs.Main:Section({ Title = "Auto", Icon = "rocket" })
 
+
+local CurrentPatients = Tabs.Main:Paragraph({
+    Title = "Current Patients",
+    Desc = [[
+🪑 Desk 1
+• Waiting...
+🟡 Empty
+
+🪑 Desk 2
+• Waiting...
+🟡 Empty
+]]
+})
+
 -- Auto Check-in Toggle
 local autoCheckInEnabled = false
 local checkInLoop = nil
@@ -555,18 +569,7 @@ Tabs.Main:Toggle({
     end
 })
 
-local CurrentPatients = Tabs.Main:Paragraph({
-    Title = "Current Patients",
-    Desc = [[
-🪑 Desk 1
-• Waiting...
-🟡 Empty
 
-🪑 Desk 2
-• Waiting...
-🟡 Empty
-]]
-})
 
 -- ESP Tab
 Tabs.ESP = Window:Tab({
