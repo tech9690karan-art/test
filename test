@@ -266,18 +266,18 @@ Tabs.Main:Toggle({
                     local npc2 = GetNPCInRadius2()
                 
                     local desk1Name = "Waiting..."
-                    local desk1Status = "🟡 EMPTY"
+                    local desk1Status = "🟡 Empty"
                 
                     local desk2Name = "Waiting..."
-                    local desk2Status = "🟡 EMPTY"
+                    local desk2Status = "🟡 Empty"
                 
                     if npc1 then
                         desk1Name = npc1.Name
                 
                         if npc1:GetAttribute("Skinwalker") then
-                            desk1Status = "🔴 ANOMALY"
+                            desk1Status = "🔴 Anomaly"
                         else
-                            desk1Status = "🟢 PATIENT"
+                            desk1Status = "🟢 Patient"
                         end
                     end
                 
@@ -285,24 +285,25 @@ Tabs.Main:Toggle({
                         desk2Name = npc2.Name
                 
                         if npc2:GetAttribute("Skinwalker") then
-                            desk2Status = "🔴 ANOMALY"
+                            desk2Status = "🔴 Anomaly"
                         else
-                            desk2Status = "🟢 PATIENT"
+                            desk2Status = "🟢 Patient"
                         end
                     end
                 
-                    CurrentPatientsCode:SetCode(string.format([[
-                Current Patients
-                ──────────────────────────────────────────────
+                    CurrentPatients:SetDesc(string.format([[
+                🪑 Desk 1
+                • %s
+                %s
                 
-                Desk 1                    Desk 2
-                ──────────────────        ──────────────────
-                %-25s%s
-                %-25s%s
-                ]], desk1Name, desk2Name, desk1Status, desk2Status))
+                🪑 Desk 2
+                • %s
+                %s
+                ]], desk1Name, desk1Status, desk2Name, desk2Status))
                 
                 end
-                    
+
+                        
                 local SKIP_NPCS = {
                     Doctor = true,
                     Barney = true,
@@ -532,14 +533,14 @@ Tabs.Main:Toggle({
             if checkInLoop then
                 autoCheckInEnabled = false
 
-                CurrentPatientsCode:SetCode([[
-                Current Patients
-                ──────────────────────────────────────────────
+                CurrentPatients:SetDesc([[
+                🪑 Desk 1
+                • Waiting...
+                🟡 Empty
                 
-                Desk 1                    Desk 2
-                ──────────────────        ──────────────────
-                Waiting...                Waiting...
-                🟡 EMPTY                  🟡 EMPTY
+                🪑 Desk 2
+                • Waiting...
+                🟡 Empty
                 ]])
                     
                 checkInLoop = nil
@@ -554,16 +555,16 @@ Tabs.Main:Toggle({
     end
 })
 
-local CurrentPatientsCode = Tabs.Main:Code({
+local CurrentPatients = Tabs.Main:Paragraph({
     Title = "Current Patients",
-    Code = [[
-Current Patients
-──────────────────────────────────────────────
+    Desc = [[
+🪑 Desk 1
+• Waiting...
+🟡 Empty
 
-Desk 1                    Desk 2
-──────────────────        ──────────────────
-Waiting...                Waiting...
-🟡 EMPTY                  🟡 EMPTY
+🪑 Desk 2
+• Waiting...
+🟡 Empty
 ]]
 })
 
