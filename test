@@ -259,7 +259,50 @@ Tabs.Main:Toggle({
                     end
                     return nil
                 end
+
+                local function UpdateCurrentPatients()
                 
+                    local npc1 = GetNPCInRadius1()
+                    local npc2 = GetNPCInRadius2()
+                
+                    local desk1Name = "Waiting..."
+                    local desk1Status = "🟡 EMPTY"
+                
+                    local desk2Name = "Waiting..."
+                    local desk2Status = "🟡 EMPTY"
+                
+                    if npc1 then
+                        desk1Name = npc1.Name
+                
+                        if npc1:GetAttribute("Skinwalker") then
+                            desk1Status = "🔴 ANOMALY"
+                        else
+                            desk1Status = "🟢 PATIENT"
+                        end
+                    end
+                
+                    if npc2 then
+                        desk2Name = npc2.Name
+                
+                        if npc2:GetAttribute("Skinwalker") then
+                            desk2Status = "🔴 ANOMALY"
+                        else
+                            desk2Status = "🟢 PATIENT"
+                        end
+                    end
+                
+                    CurrentPatientsCode:SetCode(string.format([[
+                Current Patients
+                ──────────────────────────────────────────────
+                
+                Desk 1                    Desk 2
+                ──────────────────        ──────────────────
+                %-25s%s
+                %-25s%s
+                ]], desk1Name, desk2Name, desk1Status, desk2Status))
+                
+                end
+                    
                 local SKIP_NPCS = {
                     Doctor = true,
                     Barney = true,
@@ -438,6 +481,9 @@ Tabs.Main:Toggle({
                         
                 -- Main loop
                 while autoCheckInEnabled do
+
+                    UpdateCurrentPatients()
+                            
                     -- Clean up cooldowns older than 30 seconds
                     for npc, t in pairs(Cooldown) do
                         if tick() - t >= COOLDOWN_TIME then
@@ -485,6 +531,17 @@ Tabs.Main:Toggle({
         else
             if checkInLoop then
                 autoCheckInEnabled = false
+
+                CurrentPatientsCode:SetCode([[
+                Current Patients
+                ──────────────────────────────────────────────
+                
+                Desk 1                    Desk 2
+                ──────────────────        ──────────────────
+                Waiting...                Waiting...
+                🟡 EMPTY                  🟡 EMPTY
+                ]])
+                    
                 checkInLoop = nil
             end
             WindUI:Notify({
@@ -495,6 +552,19 @@ Tabs.Main:Toggle({
             })
         end
     end
+})
+
+local CurrentPatientsCode = Tabs.Main:Code({
+    Title = "Current Patients",
+    Code = [[
+Current Patients
+──────────────────────────────────────────────
+
+Desk 1                    Desk 2
+──────────────────        ──────────────────
+Waiting...                Waiting...
+🟡 EMPTY                  🟡 EMPTY
+]]
 })
 
 -- ESP Tab
