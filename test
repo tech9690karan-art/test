@@ -209,7 +209,7 @@ local function collectCoin(coin)
     
     local distance = (coinPos - rootPart.Position).Magnitude
     if distance > 0 then
-        local tween = TweenService:Create(rootPart, TweenInfo.new(distance / 60, Enum.EasingStyle.Linear), {
+        local tween = TweenService:Create(rootPart, TweenInfo.new(distance / 30, Enum.EasingStyle.Linear), {
             CFrame = CFrame.new(coinPos)
         })
         tween:Play()
@@ -223,7 +223,7 @@ local function collectCoin(coin)
         end
         
         fireTouch(getCoinPart(coin))
-        task.wait(0.02)
+        task.wait(0.05)
         return true
     end
     return false
@@ -1278,7 +1278,7 @@ do
                             if not Modules.Config.AutoFarmCoins then break end
                             if coin and coin.Parent then
                                 collectCoin(coin)
-                                task.wait(0.02)
+                                task.wait(0.05)
                             end
                         end
                         
@@ -1294,7 +1294,7 @@ do
                             end
                         end
                     else
-                        task.wait(0.3)
+                        task.wait(0.5)
                     end
                 else
                     task.wait(0.5)
