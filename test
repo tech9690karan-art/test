@@ -1274,6 +1274,19 @@ do
                 if hasCoins() then
                     local coins = getCoins()
                     if #coins > 0 then
+                        -- Sort coins by distance (nearest first)
+                        local rootPart = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                        if rootPart then
+                            local myPos = rootPart.Position
+                            table.sort(coins, function(a, b)
+                                local posA = getCoinPosition(a)
+                                local posB = getCoinPosition(b)
+                                if not posA then return false end
+                                if not posB then return true end
+                                return (myPos - posA).Magnitude < (myPos - posB).Magnitude
+                            end)
+                        end
+                        
                         for _, coin in ipairs(coins) do
                             if not Modules.Config.AutoFarmCoins then break end
                             if coin and coin.Parent then
