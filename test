@@ -1,9 +1,24 @@
--- Add these near the top of your script with other variables
+-- ============================================
+-- STANDALONE AUTO FEED TEST SCRIPT
+-- ============================================
+
+repeat task.wait() until game:IsLoaded()
+
+-- Load WindUI
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Variables
 local autoFeedToggle = false
 local selectedFood = {}
 local hungerThreshold = 75
 
--- Food list (keep your existing one)
+-- Food list
 local alimentos = {
     "Apple",
     "Berry",
@@ -17,46 +32,7 @@ local alimentos = {
     "Cooked Steak"
 }
 
--- ============================================
--- AUTO FEED SYSTEM - FIXED VERSION
--- ============================================
-
--- Helper Functions (add these if not already present)
-function wiki(nome)
-    local c = 0
-    
-    -- Check ground items
-    if Workspace:FindFirstChild("Items") then
-        for _, i in ipairs(Workspace.Items:GetChildren()) do
-            if i.Name == nome then
-                c = c + 1
-            end
-        end
-    end
-    
-    -- Check Roblox Backpack
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if backpack then
-        for _, i in ipairs(backpack:GetChildren()) do
-            if i.Name == nome then
-                c = c + 1
-            end
-        end
-    end
-    
-    -- Check custom Inventory
-    local inventory = LocalPlayer:FindFirstChild("Inventory")
-    if inventory then
-        for _, i in ipairs(inventory:GetChildren()) do
-            if i.Name == nome then
-                c = c + 1
-            end
-        end
-    end
-    
-    return c
-end
-
+-- Get hunger percentage
 function ghn()
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
     if playerGui then
@@ -74,66 +50,77 @@ function ghn()
             end
         end
     end
-    return 100 -- Default to full if GUI not found
+    return 100
 end
 
+-- Count food items on ground
+function wiki(nome)
+    local c = 0
+    if Workspace:FindFirstChild("Items") then
+        for _, i in ipairs(Workspace.Items:GetChildren()) do
+            if i.Name == nome then
+                c = c + 1
+            end
+        end
+    end
+    return c
+end
+
+-- Eat food item
 function feed(nome)
-    -- Try ground items first
     if Workspace:FindFirstChild("Items") then
         for _, item in ipairs(Workspace.Items:GetChildren()) do
             if item.Name == nome then
                 ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
-                return true -- Successfully ate from ground
+                return true
             end
         end
     end
-    
-    -- Try Backpack items
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if backpack then
-        for _, item in ipairs(backpack:GetChildren()) do
-            if item.Name == nome then
-                ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
-                return true -- Successfully ate from backpack
-            end
-        end
-    end
-    
-    -- Try custom Inventory items
-    local inventory = LocalPlayer:FindFirstChild("Inventory")
-    if inventory then
-        for _, item in ipairs(inventory:GetChildren()) do
-            if item.Name == nome then
-                ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
-                return true -- Successfully ate from inventory
-            end
-        end
-    end
-    
-    return false -- Nothing to eat
+    return false
 end
 
--- ============================================
--- UI ELEMENTS
--- ============================================
+-- Create Window
+local Window = WindUI:CreateWindow({
+    Title = "Auto Feed Test",
+    Author = "Test",
+    Icon = "rbxassetid://86958834463274",
+    Folder = "AutoFeedTest",
+    Size = UDim2.fromOffset(400, 300),
+    Transparent = false,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 150,
+})
 
-Tabs.Main:Section({ Title = "Auto Feed", Icon = "utensils" })
+Window:SetToggleKey(Enum.KeyCode.K)
 
-Tabs.Main:Dropdown({
+-- Create Tab
+local MainTab = Window:Tab({
+    Title = "Main",
+    Icon = "zap",
+})
+
+-- Auto Feed Section
+MainTab:Section({ Title = "Auto Feed", Icon = "utensils" })
+
+-- Food Dropdown
+MainTab:Dropdown({
     Title = "Select Food",
-    Desc = "Choose the food",
+    Desc = "Choose food to eat",
     Values = alimentos,
     Value = selectedFood,
     Multi = true,
     AllowNone = true,
     Callback = function(value)
         selectedFood = value
+        print("Selected food:", table.concat(selectedFood, ", "))
     end
 })
 
-Tabs.Main:Input({
-    Title = "Feed Amount",
-    Desc = "Eat when hunger reaches this %",
+-- Hunger Threshold Input
+MainTab:Input({
+    Title = "Hunger Threshold %",
+    Desc = "Eat when hunger drops below this",
     Value = tostring(hungerThreshold),
     Placeholder = "Ex: 50",
     Numeric = true,
@@ -141,142 +128,175 @@ Tabs.Main:Input({
         local n = tonumber(value)
         if n then
             hungerThreshold = math.clamp(n, 0, 100)
+            print("Threshold set to:", hungerThreshold .. "%")
         end
     end
 })
 
--- ============================================
--- MAIN AUTO FEED TOGGLE - FIXED
--- ============================================
+-- Status Label
+local statusLabel = MainTab:Label({
+    Title = "Status: Waiting...",
+})
 
-Tabs.Main:Toggle({
+-- Auto Feed Toggle
+MainTab:Toggle({
     Title = "Auto Feed",
     Value = false,
     Callback = function(state)
         autoFeedToggle = state
         
         if state then
-            -- Check if any food is selected
+            -- Validate food selection
             if #selectedFood == 0 then
                 WindUI:Notify({
-                    Title = "⚠️ No Food Selected",
-                    Content = "Please select food from dropdown first!",
+                    Title = "No Food Selected",
+                    Content = "Select food from dropdown first!",
                     Duration = 3
                 })
                 autoFeedToggle = false
-                task.wait(0.1)
-                Tabs.Main:Find("Auto Feed"):SetValue(false)
                 return
             end
             
+            statusLabel:SetTitle("Status: Running...")
+            
             WindUI:Notify({
-                Title = "🍖 Auto Feed Started",
-                Content = "Will eat when hunger drops below " .. hungerThreshold .. "%",
+                Title = "Auto Feed Started",
+                Content = "Threshold: " .. hungerThreshold .. "%",
                 Duration = 3
             })
             
-            -- Start auto feed loop
+            print("=== AUTO FEED STARTED ===")
+            print("Selected foods:", table.concat(selectedFood, ", "))
+            print("Hunger threshold:", hungerThreshold .. "%")
+            
+            -- Main loop
             task.spawn(function()
-                local lastNotification = 0 -- Prevent notification spam
-                
                 while autoFeedToggle do
-                    task.wait(0.1) -- Check every 100ms
+                    task.wait(0.5) -- Check every 0.5 seconds
                     
-                    -- Get current hunger
                     local currentHunger = ghn()
                     
-                    -- Check if any selected food exists
-                    local foodExists = false
-                    local availableFoods = {}
+                    -- Update status
+                    statusLabel:SetTitle("Status: Hunger " .. currentHunger .. "% | Threshold " .. hungerThreshold .. "%")
+                    
+                    -- Check if food exists
+                    local hasFood = false
+                    local availableFood = nil
                     
                     for _, foodName in ipairs(selectedFood) do
                         local count = wiki(foodName)
                         if count > 0 then
-                            foodExists = true
-                            table.insert(availableFoods, foodName)
+                            hasFood = true
+                            availableFood = foodName
+                            break
                         end
                     end
                     
-                    -- If no food exists, stop auto feed
-                    if not foodExists then
+                    -- No food = stop
+                    if not hasFood then
+                        print("No food found! Stopping...")
+                        statusLabel:SetTitle("Status: No food found - Stopped")
                         autoFeedToggle = false
-                        task.wait(0.1)
-                        Tabs.Main:Find("Auto Feed"):SetValue(false)
-                        
                         WindUI:Notify({
-                            Title = "❌ Auto Feed Stopped",
-                            Content = "No selected food found!",
+                            Title = "Auto Feed Stopped",
+                            Content = "No food found on ground!",
                             Duration = 5
                         })
                         break
                     end
                     
-                    -- If hungry, eat food
+                    -- Eat if hungry
                     if currentHunger <= hungerThreshold then
-                        -- Try to eat each available food
-                        local ate = false
-                        for _, foodName in ipairs(availableFoods) do
-                            if feed(foodName) then
-                                ate = true
-                                
-                                -- Show notification every 5 seconds max
-                                local currentTime = tick()
-                                if currentTime - lastNotification > 5 then
-                                    WindUI:Notify({
-                                        Title = "🍖 Eating Food",
-                                        Content = "Ate: " .. foodName .. " | Hunger: " .. currentHunger .. "%",
-                                        Duration = 2
-                                    })
-                                    lastNotification = currentTime
-                                end
-                                break
-                            end
-                        end
+                        print("Hunger " .. currentHunger .. "% <= " .. hungerThreshold .. "%, eating " .. availableFood)
                         
-                        if not ate then
-                            -- Failed to eat despite having food (rare edge case)
-                            task.wait(0.5) -- Wait a bit before retry
+                        if feed(availableFood) then
+                            statusLabel:SetTitle("Status: Ate " .. availableFood .. " | Hunger " .. currentHunger .. "%")
+                            WindUI:Notify({
+                                Title = "Eating Food",
+                                Content = "Ate: " .. availableFood .. " | Hunger: " .. currentHunger .. "%",
+                                Duration = 2
+                            })
+                        else
+                            print("Failed to eat " .. availableFood)
                         end
                     end
                 end
                 
-                print("Auto Feed loop ended")
+                print("=== AUTO FEED STOPPED ===")
+                statusLabel:SetTitle("Status: Stopped")
             end)
         else
-            -- Toggle turned off
+            statusLabel:SetTitle("Status: Disabled")
+            print("Auto feed disabled")
+        end
+    end
+})
+
+-- Debug Buttons
+MainTab:Section({ Title = "Debug", Icon = "wrench" })
+
+MainTab:Button({
+    Title = "Check Hunger",
+    Callback = function()
+        local hunger = ghn()
+        print("Current Hunger:", hunger .. "%")
+        WindUI:Notify({
+            Title = "Hunger Check",
+            Content = "Current hunger: " .. hunger .. "%",
+            Duration = 3
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "Check Food on Ground",
+    Callback = function()
+        print("=== FOOD ON GROUND ===")
+        local total = 0
+        for _, foodName in ipairs(alimentos) do
+            local count = wiki(foodName)
+            if count > 0 then
+                print(foodName .. ": " .. count)
+                total = total + count
+            end
+        end
+        print("Total food items:", total)
+        print("======================")
+        
+        WindUI:Notify({
+            Title = "Food Check",
+            Content = "Total food on ground: " .. total,
+            Duration = 3
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "Test Eat Apple",
+    Callback = function()
+        local count = wiki("Apple")
+        print("Apples on ground:", count)
+        if count > 0 then
+            local success = feed("Apple")
+            print("Eat success:", success)
             WindUI:Notify({
-                Title = "⏹️ Auto Feed Disabled",
-                Content = "Auto feed has been stopped",
+                Title = "Test Eat",
+                Content = success and "Ate an apple!" or "Failed to eat",
+                Duration = 2
+            })
+        else
+            WindUI:Notify({
+                Title = "No Apples",
+                Content = "No apples on ground!",
                 Duration = 2
             })
         end
     end
 })
 
--- Optional: Status display showing current hunger
-local hungerStatusConnection
+-- Select first tab
+Window:SelectTab(1)
 
-Tabs.Main:Toggle({
-    Title = "Show Hunger Status",
-    Value = false,
-    Callback = function(state)
-        if state then
-            hungerStatusConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                -- This will spam notifications every 2 seconds
-                -- You can replace with a label or other display method
-            end)
-            
-            -- Simpler approach: Show initial status
-            WindUI:Notify({
-                Title = "📊 Hunger Status",
-                Content = "Current hunger: " .. ghn() .. "% | Threshold: " .. hungerThreshold .. "%",
-                Duration = 3
-            })
-        else
-            if hungerStatusConnection then
-                hungerStatusConnection:Disconnect()
-                hungerStatusConnection = nil
-            end
-        end
-    end
-})
+print("=== AUTO FEED TEST SCRIPT LOADED ===")
+print("Press K to open/close the menu")
+print("Drop some food on the ground to test")
