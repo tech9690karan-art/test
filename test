@@ -1,136 +1,21 @@
--- ============================================
--- MINIMAL DEBUG SCRIPT - FIND THE PROBLEM
--- ============================================
-
-repeat task.wait() until game:IsLoaded()
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-
-print("=== DEBUG START ===")
-
--- Step 1: Check if Workspace.Items exists
-local itemsFolder = Workspace:FindFirstChild("Items")
-print("1. Workspace.Items exists:", itemsFolder ~= nil)
-
-if itemsFolder then
-    local items = itemsFolder:GetChildren()
-    print("2. Items in Workspace.Items:", #items)
+-- Check if Carrot is actually a Tool or a Part
+local carrot = Workspace.Items:FindFirstChild("Carrot")
+if carrot then
+    print("Carrot details:")
+    print("  ClassName:", carrot.ClassName)
+    print("  IsA Tool:", carrot:IsA("Tool"))
+    print("  IsA BasePart:", carrot:IsA("BasePart"))
+    print("  IsA Model:", carrot:IsA("Model"))
     
-    -- List first 5 items
-    for i = 1, math.min(5, #items) do
-        print("   - " .. items[i].Name .. " | Class: " .. items[i].ClassName)
-    end
-else
-    print("❌ Workspace.Items not found! Looking elsewhere...")
+    -- Check if it has a Handle
+    local handle = carrot:FindFirstChild("Handle")
+    print("  Has Handle:", handle ~= nil)
     
-    -- Maybe items are stored differently
-    for _, child in ipairs(Workspace:GetChildren()) do
-        if child:IsA("Folder") or child:IsA("Model") then
-            local itemCount = #child:GetChildren()
-            if itemCount > 0 then
-                print("   Folder: " .. child.Name .. " has " .. itemCount .. " children")
-            end
-        end
+    -- Check for ProximityPrompt
+    local prompt = carrot:FindFirstChildOfClass("ProximityPrompt")
+    print("  Has ProximityPrompt:", prompt ~= nil)
+    if prompt then
+        print("  Prompt ActionText:", prompt.ActionText)
+        print("  Prompt KeyboardKeyCode:", prompt.KeyboardKeyCode)
     end
 end
-
--- Step 3: Check PlayerGui structure
-local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-print("3. PlayerGui exists:", playerGui ~= nil)
-
-if playerGui then
-    local interface = playerGui:FindFirstChild("Interface")
-    print("4. Interface exists:", interface ~= nil)
-    
-    if interface then
-        print("5. Interface children:")
-        for _, child in ipairs(interface:GetChildren()) do
-            print("   - " .. child.Name .. " | Class: " .. child.ClassName)
-        end
-        
-        local statBars = interface:FindFirstChild("StatBars")
-        print("6. StatBars exists:", statBars ~= nil)
-        
-        if statBars then
-            print("7. StatBars children:")
-            for _, child in ipairs(statBars:GetChildren()) do
-                print("   - " .. child.Name .. " | Class: " .. child.ClassName)
-            end
-            
-            local hungerBar = statBars:FindFirstChild("HungerBar")
-            print("8. HungerBar exists:", hungerBar ~= nil)
-            
-            if hungerBar then
-                local bar = hungerBar:FindFirstChild("Bar")
-                print("9. Bar exists:", bar ~= nil)
-                
-                if bar then
-                    local hungerPercent = math.floor(bar.Size.X.Scale * 100)
-                    print("10. Current Hunger:", hungerPercent .. "%")
-                end
-            end
-        end
-    end
-end
-
--- Step 4: Check RemoteEvents
-print("11. RemoteEvents exists:", ReplicatedStorage:FindFirstChild("RemoteEvents") ~= nil)
-
-if ReplicatedStorage:FindFirstChild("RemoteEvents") then
-    local requestConsume = ReplicatedStorage.RemoteEvents:FindFirstChild("RequestConsumeItem")
-    print("12. RequestConsumeItem exists:", requestConsume ~= nil)
-    
-    if requestConsume then
-        print("    ClassName:", requestConsume.ClassName)
-    end
-    
-    -- List all remote events
-    print("13. All RemoteEvents:")
-    for _, event in ipairs(ReplicatedStorage.RemoteEvents:GetChildren()) do
-        print("   - " .. event.Name .. " | Class: " .. event.ClassName)
-    end
-end
-
--- Step 5: Try to manually eat (TEST)
-print("\n=== MANUAL EAT TEST ===")
-
-if itemsFolder then
-    -- Find an Apple
-    local apple = nil
-    for _, item in ipairs(itemsFolder:GetChildren()) do
-        if item.Name == "Apple" then
-            apple = item
-            break
-        end
-    end
-    
-    if apple then
-        print("Found Apple:", apple.Name, "| Class:", apple.ClassName)
-        print("Apple Parent:", apple.Parent.Name)
-        
-        -- Try to eat it
-        print("Attempting to eat...")
-        local success, error = pcall(function()
-            ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(apple)
-        end)
-        
-        if success then
-            print("✅ Eat command sent successfully!")
-        else
-            print("❌ Error eating:", error)
-        end
-    else
-        print("❌ No Apple found on ground!")
-        print("Available items:")
-        for _, item in ipairs(itemsFolder:GetChildren()) do
-            print("   - " .. item.Name)
-        end
-    end
-else
-    print("❌ Cannot test eat - Workspace.Items not found")
-end
-
-print("=== DEBUG END ===")
