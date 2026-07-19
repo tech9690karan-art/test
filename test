@@ -1,302 +1,136 @@
 -- ============================================
--- STANDALONE AUTO FEED TEST SCRIPT
+-- MINIMAL DEBUG SCRIPT - FIND THE PROBLEM
 -- ============================================
 
 repeat task.wait() until game:IsLoaded()
 
--- Load WindUI
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-
--- Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
--- Variables
-local autoFeedToggle = false
-local selectedFood = {}
-local hungerThreshold = 75
+print("=== DEBUG START ===")
 
--- Food list
-local alimentos = {
-    "Apple",
-    "Berry",
-    "Carrot",
-    "Cake",
-    "Chili",
-    "Cooked Ribs",
-    "Cooked Mackerel",
-    "Cooked Salmon",
-    "Cooked Morsel",
-    "Cooked Steak"
-}
+-- Step 1: Check if Workspace.Items exists
+local itemsFolder = Workspace:FindFirstChild("Items")
+print("1. Workspace.Items exists:", itemsFolder ~= nil)
 
--- Get hunger percentage
-function ghn()
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    if playerGui then
-        local interface = playerGui:FindFirstChild("Interface")
-        if interface then
-            local statBars = interface:FindFirstChild("StatBars")
-            if statBars then
-                local hungerBar = statBars:FindFirstChild("HungerBar")
-                if hungerBar then
-                    local bar = hungerBar:FindFirstChild("Bar")
-                    if bar then
-                        return math.floor(bar.Size.X.Scale * 100)
-                    end
-                end
+if itemsFolder then
+    local items = itemsFolder:GetChildren()
+    print("2. Items in Workspace.Items:", #items)
+    
+    -- List first 5 items
+    for i = 1, math.min(5, #items) do
+        print("   - " .. items[i].Name .. " | Class: " .. items[i].ClassName)
+    end
+else
+    print("❌ Workspace.Items not found! Looking elsewhere...")
+    
+    -- Maybe items are stored differently
+    for _, child in ipairs(Workspace:GetChildren()) do
+        if child:IsA("Folder") or child:IsA("Model") then
+            local itemCount = #child:GetChildren()
+            if itemCount > 0 then
+                print("   Folder: " .. child.Name .. " has " .. itemCount .. " children")
             end
         end
     end
-    return 100
 end
 
--- Count food items on ground
-function wiki(nome)
-    local c = 0
-    if Workspace:FindFirstChild("Items") then
-        for _, i in ipairs(Workspace.Items:GetChildren()) do
-            if i.Name == nome then
-                c = c + 1
-            end
+-- Step 3: Check PlayerGui structure
+local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+print("3. PlayerGui exists:", playerGui ~= nil)
+
+if playerGui then
+    local interface = playerGui:FindFirstChild("Interface")
+    print("4. Interface exists:", interface ~= nil)
+    
+    if interface then
+        print("5. Interface children:")
+        for _, child in ipairs(interface:GetChildren()) do
+            print("   - " .. child.Name .. " | Class: " .. child.ClassName)
         end
-    end
-    return c
-end
-
--- Eat food item
-function feed(nome)
-    if Workspace:FindFirstChild("Items") then
-        for _, item in ipairs(Workspace.Items:GetChildren()) do
-            if item.Name == nome then
-                ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
-                return true
-            end
-        end
-    end
-    return false
-end
-
--- Create Window
-local Window = WindUI:CreateWindow({
-    Title = "Auto Feed Test",
-    Author = "Test",
-    Icon = "rbxassetid://86958834463274",
-    Folder = "AutoFeedTest",
-    Size = UDim2.fromOffset(400, 300),
-    Transparent = false,
-    Theme = "Dark",
-    Resizable = true,
-    SideBarWidth = 150,
-})
-
-Window:SetToggleKey(Enum.KeyCode.K)
-
--- Create Tab
-local MainTab = Window:Tab({
-    Title = "Main",
-    Icon = "zap",
-})
-
--- Auto Feed Section
-MainTab:Section({ Title = "Auto Feed", Icon = "utensils" })
-
--- Food Dropdown
-MainTab:Dropdown({
-    Title = "Select Food",
-    Desc = "Choose food to eat",
-    Values = alimentos,
-    Value = selectedFood,
-    Multi = true,
-    AllowNone = true,
-    Callback = function(value)
-        selectedFood = value
-        print("Selected food:", table.concat(selectedFood, ", "))
-    end
-})
-
--- Hunger Threshold Input
-MainTab:Input({
-    Title = "Hunger Threshold %",
-    Desc = "Eat when hunger drops below this",
-    Value = tostring(hungerThreshold),
-    Placeholder = "Ex: 50",
-    Numeric = true,
-    Callback = function(value)
-        local n = tonumber(value)
-        if n then
-            hungerThreshold = math.clamp(n, 0, 100)
-            print("Threshold set to:", hungerThreshold .. "%")
-        end
-    end
-})
-
--- Status Label
-local statusLabel = MainTab:Label({
-    Title = "Status: Waiting...",
-})
-
--- Auto Feed Toggle
-MainTab:Toggle({
-    Title = "Auto Feed",
-    Value = false,
-    Callback = function(state)
-        autoFeedToggle = state
         
-        if state then
-            -- Validate food selection
-            if #selectedFood == 0 then
-                WindUI:Notify({
-                    Title = "No Food Selected",
-                    Content = "Select food from dropdown first!",
-                    Duration = 3
-                })
-                autoFeedToggle = false
-                return
+        local statBars = interface:FindFirstChild("StatBars")
+        print("6. StatBars exists:", statBars ~= nil)
+        
+        if statBars then
+            print("7. StatBars children:")
+            for _, child in ipairs(statBars:GetChildren()) do
+                print("   - " .. child.Name .. " | Class: " .. child.ClassName)
             end
             
-            statusLabel:SetTitle("Status: Running...")
+            local hungerBar = statBars:FindFirstChild("HungerBar")
+            print("8. HungerBar exists:", hungerBar ~= nil)
             
-            WindUI:Notify({
-                Title = "Auto Feed Started",
-                Content = "Threshold: " .. hungerThreshold .. "%",
-                Duration = 3
-            })
-            
-            print("=== AUTO FEED STARTED ===")
-            print("Selected foods:", table.concat(selectedFood, ", "))
-            print("Hunger threshold:", hungerThreshold .. "%")
-            
-            -- Main loop
-            task.spawn(function()
-                while autoFeedToggle do
-                    task.wait(0.5) -- Check every 0.5 seconds
-                    
-                    local currentHunger = ghn()
-                    
-                    -- Update status
-                    statusLabel:SetTitle("Status: Hunger " .. currentHunger .. "% | Threshold " .. hungerThreshold .. "%")
-                    
-                    -- Check if food exists
-                    local hasFood = false
-                    local availableFood = nil
-                    
-                    for _, foodName in ipairs(selectedFood) do
-                        local count = wiki(foodName)
-                        if count > 0 then
-                            hasFood = true
-                            availableFood = foodName
-                            break
-                        end
-                    end
-                    
-                    -- No food = stop
-                    if not hasFood then
-                        print("No food found! Stopping...")
-                        statusLabel:SetTitle("Status: No food found - Stopped")
-                        autoFeedToggle = false
-                        WindUI:Notify({
-                            Title = "Auto Feed Stopped",
-                            Content = "No food found on ground!",
-                            Duration = 5
-                        })
-                        break
-                    end
-                    
-                    -- Eat if hungry
-                    if currentHunger <= hungerThreshold then
-                        print("Hunger " .. currentHunger .. "% <= " .. hungerThreshold .. "%, eating " .. availableFood)
-                        
-                        if feed(availableFood) then
-                            statusLabel:SetTitle("Status: Ate " .. availableFood .. " | Hunger " .. currentHunger .. "%")
-                            WindUI:Notify({
-                                Title = "Eating Food",
-                                Content = "Ate: " .. availableFood .. " | Hunger: " .. currentHunger .. "%",
-                                Duration = 2
-                            })
-                        else
-                            print("Failed to eat " .. availableFood)
-                        end
-                    end
-                end
+            if hungerBar then
+                local bar = hungerBar:FindFirstChild("Bar")
+                print("9. Bar exists:", bar ~= nil)
                 
-                print("=== AUTO FEED STOPPED ===")
-                statusLabel:SetTitle("Status: Stopped")
-            end)
-        else
-            statusLabel:SetTitle("Status: Disabled")
-            print("Auto feed disabled")
-        end
-    end
-})
-
--- Debug Buttons
-MainTab:Section({ Title = "Debug", Icon = "wrench" })
-
-MainTab:Button({
-    Title = "Check Hunger",
-    Callback = function()
-        local hunger = ghn()
-        print("Current Hunger:", hunger .. "%")
-        WindUI:Notify({
-            Title = "Hunger Check",
-            Content = "Current hunger: " .. hunger .. "%",
-            Duration = 3
-        })
-    end
-})
-
-MainTab:Button({
-    Title = "Check Food on Ground",
-    Callback = function()
-        print("=== FOOD ON GROUND ===")
-        local total = 0
-        for _, foodName in ipairs(alimentos) do
-            local count = wiki(foodName)
-            if count > 0 then
-                print(foodName .. ": " .. count)
-                total = total + count
+                if bar then
+                    local hungerPercent = math.floor(bar.Size.X.Scale * 100)
+                    print("10. Current Hunger:", hungerPercent .. "%")
+                end
             end
         end
-        print("Total food items:", total)
-        print("======================")
-        
-        WindUI:Notify({
-            Title = "Food Check",
-            Content = "Total food on ground: " .. total,
-            Duration = 3
-        })
     end
-})
+end
 
-MainTab:Button({
-    Title = "Test Eat Apple",
-    Callback = function()
-        local count = wiki("Apple")
-        print("Apples on ground:", count)
-        if count > 0 then
-            local success = feed("Apple")
-            print("Eat success:", success)
-            WindUI:Notify({
-                Title = "Test Eat",
-                Content = success and "Ate an apple!" or "Failed to eat",
-                Duration = 2
-            })
-        else
-            WindUI:Notify({
-                Title = "No Apples",
-                Content = "No apples on ground!",
-                Duration = 2
-            })
+-- Step 4: Check RemoteEvents
+print("11. RemoteEvents exists:", ReplicatedStorage:FindFirstChild("RemoteEvents") ~= nil)
+
+if ReplicatedStorage:FindFirstChild("RemoteEvents") then
+    local requestConsume = ReplicatedStorage.RemoteEvents:FindFirstChild("RequestConsumeItem")
+    print("12. RequestConsumeItem exists:", requestConsume ~= nil)
+    
+    if requestConsume then
+        print("    ClassName:", requestConsume.ClassName)
+    end
+    
+    -- List all remote events
+    print("13. All RemoteEvents:")
+    for _, event in ipairs(ReplicatedStorage.RemoteEvents:GetChildren()) do
+        print("   - " .. event.Name .. " | Class: " .. event.ClassName)
+    end
+end
+
+-- Step 5: Try to manually eat (TEST)
+print("\n=== MANUAL EAT TEST ===")
+
+if itemsFolder then
+    -- Find an Apple
+    local apple = nil
+    for _, item in ipairs(itemsFolder:GetChildren()) do
+        if item.Name == "Apple" then
+            apple = item
+            break
         end
     end
-})
+    
+    if apple then
+        print("Found Apple:", apple.Name, "| Class:", apple.ClassName)
+        print("Apple Parent:", apple.Parent.Name)
+        
+        -- Try to eat it
+        print("Attempting to eat...")
+        local success, error = pcall(function()
+            ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(apple)
+        end)
+        
+        if success then
+            print("✅ Eat command sent successfully!")
+        else
+            print("❌ Error eating:", error)
+        end
+    else
+        print("❌ No Apple found on ground!")
+        print("Available items:")
+        for _, item in ipairs(itemsFolder:GetChildren()) do
+            print("   - " .. item.Name)
+        end
+    end
+else
+    print("❌ Cannot test eat - Workspace.Items not found")
+end
 
--- Select first tab
-Window:SelectTab(1)
-
-print("=== AUTO FEED TEST SCRIPT LOADED ===")
-print("Press K to open/close the menu")
-print("Drop some food on the ground to test")
+print("=== DEBUG END ===")
