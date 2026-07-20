@@ -1,70 +1,936 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- NPC Check-in, ESP, and Item Bring Script with Wind UI
 
-local SanityRemote = nil
-local ENABLED = true -- Automatically enabled
+repeat task.wait() until game:IsLoaded()
 
-local function findRemoteEvent(name)
-    local util = ReplicatedStorage:FindFirstChild("Util")
-    if util then
-        local net = util:FindFirstChild("Net")
-        if net then
-            local re = net:FindFirstChild("RE")
-            if re then
-                local ev = re:FindFirstChild(name)
-                if ev then return ev end
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Get the game name dynamically
+local MarketplaceService = game:GetService("MarketplaceService")
+local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+
+-- Themes
+WindUI:AddTheme({
+    Name = "Dark",
+    Accent = "#18181b",
+    Dialog = "#18181b", 
+    Outline = "#FFFFFF",
+    Text = "#FFFFFF",
+    Placeholder = "#999999",
+    Background = "#0e0e10",
+    Button = "#52525b",
+    Icon = "#a1a1aa",
+})
+
+WindUI:AddTheme({
+    Name = "Light",
+    Accent = "#f4f4f5",
+    Dialog = "#f4f4f5",
+    Outline = "#000000", 
+    Text = "#000000",
+    Placeholder = "#666666",
+    Background = "#ffffff",
+    Button = "#e4e4e7",
+    Icon = "#52525b",
+})
+
+-- Window
+local Window = WindUI:CreateWindow({
+    Title = "VEX - " .. gameName,
+    Author = "Premium Build",
+    Folder = "Vex_Animal_Hospital",
+    Icon = "rbxassetid://86958834463274",
+    Size = UDim2.fromOffset(500, 350),
+    Transparent = false,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    HideSearchBar = false,
+    ScrollBarEnabled = true,
+    OpenButton = {
+        Enabled = false,
+    }
+})
+
+Window:SetToggleKey(Enum.KeyCode.K)
+
+local Tabs = {}
+
+-- Discord Tab
+Tabs.Discord = Window:Tab({
+    Title = "Discord",
+    Icon = "users",
+})
+
+Tabs.Discord:Paragraph({
+    Title = "Welcome to VEX Scripts!",
+    Desc = "Get the latest scripts, updates, announcements, and support by joining our Discord community.",
+    Image = "rbxassetid://82233980503615",
+    ImageSize = 60,
+    Color = "Red",
+    Buttons = {
+        {
+            Title = "Join Discord",
+            Icon = "geist:logo-discord",
+            Callback = function()
+                if setclipboard then
+                    setclipboard("https://discord.gg/FvMePtyJrq")
+
+                    Window:Dialog({
+                        Title = "Discord Link Copied",
+                        Icon = "geist:logo-discord",
+                        Content = "The Discord invite link has been copied to your clipboard.",
+                        Buttons = {
+                            {
+                                Title = "OK",
+                                Icon = "check"
+                            }
+                        }
+                    })
+                else
+                    WindUI:Notify({
+                        Title = "Clipboard Not Supported",
+                        Content = "Your executor doesn't support copying to the clipboard.",
+                        Duration = 4,
+                        Icon = "alert-triangle",
+                    })
+                end
             end
-        end
-    end
-    for _, desc in ipairs(ReplicatedStorage:GetDescendants()) do
-        if (desc:IsA("RemoteEvent") or desc:IsA("RemoteFunction")) and desc.Name:lower():find(name:lower()) then
-            return desc
-        end
-    end
-    return nil
-end
+        }
+    }
+})
 
--- Find the remote immediately
-SanityRemote = findRemoteEvent("PlayerLostSanity")
 
-if SanityRemote and SanityRemote.Parent then
-    print("✅ Sanity remote found! Starting auto-execution...")
-else
-    print("❌ Sanity remote not found. Will keep trying...")
-end
+-- Main Tab
+Tabs.Main = Window:Tab({
+    Title = "Main",
+    Icon = "zap",
+})
 
--- Keep finding remote if not found
-task.spawn(function()
-    while task.wait(2) do
-        if not SanityRemote or not SanityRemote.Parent then
-            SanityRemote = findRemoteEvent("PlayerLostSanity")
-            if SanityRemote and SanityRemote.Parent then
-                print("✅ Sanity remote found!")
-            end
-        end
-    end
-end)
+Tabs.Main:Section({ Title = "Auto", Icon = "rocket" })
 
--- Main execution loop - runs automatically
-task.spawn(function()
-    print("🔄 Sanity auto-execution started...")
-    while task.wait(1) do
-        if ENABLED and SanityRemote and SanityRemote.Parent then
-            local success, result = pcall(function()
-                SanityRemote:FireServer(-100)
-                return true
+
+local CurrentPatients = Tabs.Main:Paragraph({
+    Title = "Current Patient Status",
+    Desc = [[
+DESK 1
+NAME: Waiting...
+STATUS: 🟡 Empty
+____________________
+        
+DESK 2
+NAME: Waiting...
+STATUS: 🟡 Empty
+]]
+})
+
+-- Auto Check-in Toggle
+local autoCheckInEnabled = false
+local checkInLoop = nil
+local AUTO_CHECKIN_POS = CFrame.new(-104.62301635742188, 3.4125311374664307, 6.181607246398926)
+
+Tabs.Main:Toggle({
+    Title = "Auto Check In",
+    Value = false,
+    Callback = function(state)
+        autoCheckInEnabled = state
+        
+        if state then
+            WindUI:Notify({
+                Title = "Auto Check In",
+                Content = "Auto Check In Enabled",
+                Duration = 3,
+                Icon = "check",
+            })
+            
+            checkInLoop = task.spawn(function()
+                -- NPC Check-in Script (CheckIn 1 & CheckIn 2)
+                local CHECK_POSITION_1 = CFrame.new(-103.87, 3.41, -7.14)
+                local RADIUS = 2
+                local CHECK_POSITION_2 = CFrame.new(-91.865051, 3.407531, 8.354979)
+                local COOLDOWN_TIME = 30
+                local Cooldown = {}
+                
+                -- Find NPC folder
+                local NPCS = nil
+                for _, child in ipairs(Workspace:GetChildren()) do
+                    if child.Name:lower() == "npc" or child.Name:lower() == "npcs" then
+                        NPCS = child
+                        break
+                    end
+                end
+                
+                if not NPCS then
+                    return
+                end
+                
+                -- Find CheckIn 1 folder
+                local Misc = Workspace:FindFirstChild("Misc")
+                if not Misc then
+                    return
+                end
+                
+                local CheckIn = Misc:FindFirstChild("CheckIn")
+                if not CheckIn then
+                    return
+                end
+                
+                -- Find CheckIn 2 folder
+                local CheckIn2 = Misc:FindFirstChild("CheckIn2")
+                
+                -- Define step order for CheckIn 1
+                local checkIn1Steps = {
+                    {Name = "Form", Parent = CheckIn},
+                    {Name = "Camera", Parent = CheckIn},
+                    {Name = "Computer", Parent = CheckIn},
+                    {Name = "Printer", Parent = CheckIn},
+                    {Name = "PrintedBadge", Parent = CheckIn},
+                    {Name = "NPC", Parent = nil},
+                }
+                
+                -- Define step order for CheckIn 2 (will be set once CheckIn2 exists)
+                local checkIn2Steps = nil
+                
+                -- Function to check if NPC is in radius for CheckIn 1
+                local function GetNPCInRadius1()
+                    for _, npc in ipairs(NPCS:GetChildren()) do
+                        if npc:IsA("Model") then
+                            local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
+                            if root then
+                                local dist = (root.Position - CHECK_POSITION_1.Position).Magnitude
+                                if dist <= RADIUS then
+                                    return npc
+                                end
+                            end
+                        end
+                    end
+                    return nil
+                end
+                
+                -- Function to check if NPC is in radius for CheckIn 2
+                local function GetNPCInRadius2()
+                    for _, npc in ipairs(NPCS:GetChildren()) do
+                        if npc:IsA("Model") then
+                            local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
+                            if root then
+                                local dist = (root.Position - CHECK_POSITION_2.Position).Magnitude
+                                if dist <= RADIUS then
+                                    return npc
+                                end
+                            end
+                        end
+                    end
+                    return nil
+                end
+
+                local function UpdateCurrentPatients()
+                    local npc1 = GetNPCInRadius1()
+                    local npc2 = GetNPCInRadius2()
+                
+                    local desk1Name = "Waiting..."
+                    local desk1Status = "🟡 Empty"
+                
+                    local desk2Name = "Waiting..."
+                    local desk2Status = "🟡 Empty"
+                
+                    if npc1 then
+                        desk1Name = npc1.Name
+                        if npc1:GetAttribute("Skinwalker") then
+                            desk1Status = "🔴 Anomaly"
+                        else
+                            desk1Status = "🟢 Patient"
+                        end
+                    end
+                
+                    if npc2 then
+                        desk2Name = npc2.Name
+                        if npc2:GetAttribute("Skinwalker") then
+                            desk2Status = "🔴 Anomaly"
+                        else
+                            desk2Status = "🟢 Patient"
+                        end
+                    end
+                
+                    CurrentPatients:SetDesc(string.format([[
+                    DESK 1
+                    NAME: %s
+                    STATUS: %s
+                    ____________________
+                                    
+                    DESK 2
+                    NAME: %s
+                    STATUS: %s
+                    ]], desk1Name, desk1Status, desk2Name, desk2Status))
+                end
+                        
+                local SKIP_NPCS = {
+                    Doctor = true,
+                    Barney = true,
+                }
+                
+                -- Function to find and fire next highlighted step for an NPC
+                -- Returns the step name if fired, nil if nothing found
+                local function ProcessNextHighlightedStep(npc, steps)
+                    for _, step in ipairs(steps) do
+                        local obj
+                        if step.Name == "NPC" then
+                            obj = npc
+                        else
+                            local parent = step.Parent
+                            if parent then
+                                obj = parent:FindFirstChild(step.Name)
+                            end
+                        end
+                        
+                        if obj and obj:FindFirstChild("CheckStepHighlight") then
+                            local pp = obj:FindFirstChild("PP")
+                            if pp then
+                                fireproximityprompt(pp)
+                                return step.Name
+                            end
+                        end
+                    end
+                    return nil
+                end
+                
+                -- Function to process CheckIn 1
+                local function ProcessCheckIn1(npc)
+                    local isSkinwalker = npc:GetAttribute("Skinwalker")
+                    
+                    if isSkinwalker then
+                        WindUI:Notify({
+                            Title = "⚠️ Anomaly Detected!",
+                            Content = "Anomaly detected, please close the shutter!",
+                            Duration = 5,
+                            Icon = "alert-triangle",
+                        })
+                    end
+                    
+                    if not SKIP_NPCS[npc.Name] and not isSkinwalker then
+                        -- Keep processing while NPC is in radius
+                        while autoCheckInEnabled and GetNPCInRadius1() == npc do
+                            local stepName = ProcessNextHighlightedStep(npc, checkIn1Steps)
+                            
+                            if stepName == "NPC" then
+                                Cooldown[npc] = tick()
+                                return
+                            end
+                            
+                            task.wait(0.05)
+                        end
+                    end
+                end
+                
+                -- Function to process CheckIn 2
+                local function ProcessCheckIn2(npc)
+                    local isSkinwalker = npc:GetAttribute("Skinwalker")
+                    
+                    if isSkinwalker then
+                        WindUI:Notify({
+                            Title = "⚠️ Anomaly Detected!",
+                            Content = "Anomaly detected, please close the shutter!",
+                            Duration = 5,
+                            Icon = "alert-triangle",
+                        })
+                    end
+                    
+                    if not SKIP_NPCS[npc.Name] and not isSkinwalker and checkIn2Steps then
+                        -- Keep processing while NPC is in radius
+                        while autoCheckInEnabled and GetNPCInRadius2() == npc do
+                            local stepName = ProcessNextHighlightedStep(npc, checkIn2Steps)
+                            
+                            if stepName == "NPC" then
+                                Cooldown[npc] = tick()
+                                return
+                            end
+                            
+                            task.wait(0.05)
+                        end
+                    end
+                end
+
+                -- Player positioning thread
+                task.spawn(function()
+                    while autoCheckInEnabled do
+                        local character = LocalPlayer.Character
+                        if character then
+                            local root = character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                root.CFrame = AUTO_CHECKIN_POS
+                            end
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+                        
+                -- Main loop
+                while autoCheckInEnabled do
+                    UpdateCurrentPatients()
+                            
+                    -- Clean up cooldowns older than 30 seconds
+                    for npc, t in pairs(Cooldown) do
+                        if tick() - t >= COOLDOWN_TIME then
+                            Cooldown[npc] = nil
+                        end
+                    end
+                    
+                    -- Check for NPC in CheckIn 1 radius
+                    local npc1 = GetNPCInRadius1()
+                    if npc1 and not Cooldown[npc1] then
+                        ProcessCheckIn1(npc1)
+                    end
+                    
+                    -- Check for CheckIn 2 folder and set up steps once
+                    if not CheckIn2 then
+                        CheckIn2 = Misc:FindFirstChild("CheckIn2")
+                        if CheckIn2 and not checkIn2Steps then
+                            checkIn2Steps = {
+                                {Name = "Form", Parent = CheckIn2},
+                                {Name = "Camera", Parent = CheckIn2},
+                                {Name = "Computer", Parent = CheckIn},
+                                {Name = "Printer", Parent = CheckIn},
+                                {Name = "PrintedBadge", Parent = CheckIn},
+                                {Name = "NPC", Parent = nil},
+                            }
+                        end
+                    end
+                    
+                    if CheckIn2 and checkIn2Steps then
+                        local npc2 = GetNPCInRadius2()
+                        if npc2 and not Cooldown[npc2] then
+                            ProcessCheckIn2(npc2)
+                        end
+                    end
+                    
+                    task.wait(0.5)
+                end
             end)
-            if success then
-                -- Optional: print success occasionally (commented to reduce spam)
-                -- print("✅ Sanity fired successfully")
-            else
-                print("❌ Failed to fire sanity remote")
+        else
+            if checkInLoop then
+                autoCheckInEnabled = false
+
+                CurrentPatients:SetDesc([[
+                DESK 1
+                NAME: Waiting...
+                STATUS: 🟡 Empty
+                ____________________
+                        
+                DESK 2
+                NAME: Waiting...
+                STATUS: 🟡 Empty
+                ]])
+                    
+                checkInLoop = nil
             end
-        elseif not SanityRemote or not SanityRemote.Parent then
-            -- Try to find it again if lost
-            SanityRemote = findRemoteEvent("PlayerLostSanity")
+            WindUI:Notify({
+                Title = "Auto Check In",
+                Content = "Auto Check In Disabled",
+                Duration = 3,
+                Icon = "x",
+            })
         end
+    end
+})
+
+
+
+-- ESP Tab
+Tabs.ESP = Window:Tab({
+    Title = "ESP",
+    Icon = "eye",
+})
+
+-- ESP Variables
+local highlights = {}
+local espAnomaliesEnabled = false
+local espPatientsEnabled = false
+local espConnection = nil
+
+local function CreateHighlight(npc)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = npc
+    
+    local isSkinwalker = npc:GetAttribute("Skinwalker")
+    if isSkinwalker then
+        highlight.FillColor = Color3.new(1, 0, 0) -- Red fill for anomalies
+    else
+        highlight.FillColor = Color3.new(0, 1, 0) -- Green fill for patients
+    end
+    
+    return highlight
+end
+
+local function RemoveHighlight(npc)
+    if highlights[npc] then
+        highlights[npc]:Destroy()
+        highlights[npc] = nil
+    end
+end
+
+local function UpdateESP()
+    local NPCS = nil
+    for _, child in ipairs(Workspace:GetChildren()) do
+        if child.Name:lower() == "npc" or child.Name:lower() == "npcs" then
+            NPCS = child
+            break
+        end
+    end
+    
+    if not NPCS then return end
+    
+    local MAX_DISTANCE = 1000
+    local Camera = Workspace.CurrentCamera
+    
+    -- Track current NPCs
+    local currentNPCs = {}
+    
+    for _, npc in ipairs(NPCS:GetChildren()) do
+        if npc:IsA("Model") and npc ~= LocalPlayer.Character then
+            local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc.PrimaryPart
+            if root then
+                local distance = (root.Position - Camera.CFrame.Position).Magnitude
+                local isSkinwalker = npc:GetAttribute("Skinwalker")
+                
+                -- Check if we should show this NPC based on toggles
+                local shouldShow = false
+                if espAnomaliesEnabled and isSkinwalker then
+                    shouldShow = true
+                end
+                if espPatientsEnabled and not isSkinwalker then
+                    shouldShow = true
+                end
+                
+                if shouldShow and distance <= MAX_DISTANCE then
+                    currentNPCs[npc] = true
+                    
+                    if not highlights[npc] then
+                        highlights[npc] = CreateHighlight(npc)
+                    end
+                    
+                    highlights[npc].Enabled = true
+                    if isSkinwalker then
+                        highlights[npc].FillColor = Color3.new(1, 0, 0)
+                    else
+                        highlights[npc].FillColor = Color3.new(0, 1, 0)
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Remove ESP for NPCs no longer in range or not matching toggle
+    for npc, highlight in pairs(highlights) do
+        if not currentNPCs[npc] then
+            RemoveHighlight(npc)
+        end
+    end
+end
+
+Tabs.ESP:Section({ Title = "NPC ESP", Icon = "eye" })
+
+Tabs.ESP:Toggle({
+    Title = "ESP Anomalies",
+    Value = false,
+    Callback = function(state)
+        espAnomaliesEnabled = state
+        
+        if state then
+            WindUI:Notify({
+                Title = "ESP Anomalies",
+                Content = "ESP for anomalies enabled",
+                Duration = 3,
+                Icon = "eye",
+            })
+        else
+            WindUI:Notify({
+                Title = "ESP Anomalies",
+                Content = "ESP for anomalies disabled",
+                Duration = 3,
+                Icon = "eye-off",
+            })
+        end
+        
+        if espAnomaliesEnabled or espPatientsEnabled then
+            if not espConnection then
+                espConnection = RunService.RenderStepped:Connect(UpdateESP)
+            end
+        else
+            if espConnection then
+                espConnection:Disconnect()
+                espConnection = nil
+                -- Remove all highlights
+                for npc, highlight in pairs(highlights) do
+                    RemoveHighlight(npc)
+                end
+            end
+        end
+    end
+})
+
+Tabs.ESP:Toggle({
+    Title = "ESP Patients",
+    Value = false,
+    Callback = function(state)
+        espPatientsEnabled = state
+        
+        if state then
+            WindUI:Notify({
+                Title = "ESP Patients",
+                Content = "ESP for patients enabled",
+                Duration = 3,
+                Icon = "eye",
+            })
+        else
+            WindUI:Notify({
+                Title = "ESP Patients",
+                Content = "ESP for patients disabled",
+                Duration = 3,
+                Icon = "eye-off",
+            })
+        end
+        
+        if espAnomaliesEnabled or espPatientsEnabled then
+            if not espConnection then
+                espConnection = RunService.RenderStepped:Connect(UpdateESP)
+            end
+        else
+            if espConnection then
+                espConnection:Disconnect()
+                espConnection = nil
+                -- Remove all highlights
+                for npc, highlight in pairs(highlights) do
+                    RemoveHighlight(npc)
+                end
+            end
+        end
+    end
+})
+
+-- Bring Items Tab
+Tabs.Bring = Window:Tab({
+    Title = "Bring Items",
+    Icon = "package",
+})
+
+local function FindItemPrompt(itemName, targetCFrame)
+    local closestPrompt = nil
+    local closestDistance = math.huge
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("Folder") and obj.Name == "Items" then
+            local item = obj:FindFirstChild(itemName)
+            if item then
+                local pp = item:FindFirstChild("PP")
+                if pp then
+                    local distance = (pp.Parent:GetPivot().Position - targetCFrame.Position).Magnitude
+
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPrompt = pp
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPrompt
+end
+
+-- Function to teleport, fire prompt, and return
+local function bringItem(targetCFrame, itemName)
+    local character = LocalPlayer.Character
+    if not character then
+        WindUI:Notify({
+            Title = "Error",
+            Content = "Character not found",
+            Duration = 3,
+            Icon = "alert-triangle",
+        })
+        return
+    end
+
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then
+        WindUI:Notify({
+            Title = "Error",
+            Content = "HumanoidRootPart not found",
+            Duration = 3,
+            Icon = "alert-triangle",
+        })
+        return
+    end
+
+    local prompt = FindItemPrompt(itemName, targetCFrame)
+
+    if not prompt then
+        return
+    end
+
+    -- Save initial position
+    local initialCFrame = root.CFrame
+
+    -- Teleport to target
+    root.CFrame = targetCFrame
+    task.wait(0.5)
+
+    -- Fire prompt
+    fireproximityprompt(prompt)
+
+    task.wait(0.5)
+
+    -- Teleport back
+    root.CFrame = initialCFrame
+end
+
+Tabs.Bring:Section({ Title = "Treatment Stuff", Icon = "heart" })
+
+-- Eye Drops Button
+Tabs.Bring:Button({
+    Title = "Bring Eye Drops",
+    Callback = function()
+        bringItem(
+            CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
+            "Eye Drops"
+        )
+    end
+})
+
+-- IV Drops Button
+Tabs.Bring:Button({
+    Title = "Bring IV Drops",
+    Callback = function()
+        bringItem(
+            CFrame.new(-152.32614135742188, 3.4575307369232178, -58.6792106628418),
+            "IV Drops"
+        )
+    end
+})
+
+-- Medkit Button
+Tabs.Bring:Button({
+    Title = "Bring Medkit",
+    Callback = function()
+        bringItem(
+            CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
+            "Medkit"
+        )
+    end
+})
+
+-- Thermo Button
+Tabs.Bring:Button({
+    Title = "Bring Thermo",
+    Callback = function()
+        bringItem(
+            CFrame.new(-152.3644256591797, 3.4575307369232178, -70.2892837524414),
+            "Thermo"
+        )
+    end
+})
+
+-- Bandages Button
+Tabs.Bring:Button({
+    Title = "Bring Bandages",
+    Callback = function()
+        bringItem(
+            CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
+            "Bandages"
+        )
+    end
+})
+
+-- Ointment Button
+Tabs.Bring:Button({
+    Title = "Bring Ointment",
+    Callback = function()
+        bringItem(
+            CFrame.new(-151.90907287597656, 3.4575307369232178, -81.75294494628906),
+            "Ointment"
+        )
+    end
+})
+
+-- Cough Syrup Button
+Tabs.Bring:Button({
+    Title = "Bring Cough Syrup",
+    Callback = function()
+        bringItem(
+            CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
+            "Cough Syrup"
+        )
+    end
+})
+
+-- Maple Syrup Button
+Tabs.Bring:Button({
+    Title = "Bring Maple Syrup",
+    Callback = function()
+        bringItem(
+            CFrame.new(-137.2559051513672, 3.4575307369232178, -80.47116088867188),
+            "Maple Syrup"
+        )
+    end
+})
+
+-- Herbs Button
+Tabs.Bring:Button({
+    Title = "Bring Herbs",
+    Callback = function()
+        bringItem(
+            CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
+            "Herbs"
+        )
+    end
+})
+
+-- Medicine Button
+Tabs.Bring:Button({
+    Title = "Bring Medicine",
+    Callback = function()
+        bringItem(
+            CFrame.new(-137.1851348876953, 3.4575307369232178, -60.57395935058594),
+            "Medicine"
+        )
+    end
+})
+
+Tabs.Bring:Section({ Title = "Others", Icon = "package" })
+
+-- Bring Coffee Button
+Tabs.Bring:Button({
+    Title = "Bring Coffee",
+    Callback = function()
+        -- Teleport, Fire Prompt, and Return Script
+        local Workspace = game:GetService("Workspace")
+        local Players = game:GetService("Players")
+        
+        local LocalPlayer = Players.LocalPlayer
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local root = character:WaitForChild("HumanoidRootPart")
+        
+        -- Save initial position
+        local initialCFrame = root.CFrame
+        
+        -- Teleport to coffee machine
+        root.CFrame = CFrame.new(-120.53153991699219, 3.4125311374664307, 9.277679443359375)
+        
+        task.wait(0.5)
+        
+        -- Fire prompt
+        local CoffeeMachine = Workspace:WaitForChild("Misc"):WaitForChild("CoffeeMachine")
+        local Coffee = CoffeeMachine:WaitForChild("Coffee")
+        local PP = Coffee:WaitForChild("PP")
+        
+        fireproximityprompt(PP)
+        
+        task.wait(0.5)
+        
+        -- Teleport back to initial position
+        root.CFrame = initialCFrame
+    end
+})
+
+-- Select first tab
+Window:SelectTab(1)
+
+-- Floating Open/Close Button
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HospitalFloatingButton"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
+
+local ImageButton = Instance.new("ImageButton")
+ImageButton.Parent = ScreenGui
+ImageButton.Size = UDim2.new(0, 65, 0, 65)
+ImageButton.Position = UDim2.new(0, 100, 1, -300)
+ImageButton.BackgroundTransparency = 1
+ImageButton.Image = "rbxassetid://82233980503615"
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = ImageButton
+
+local WindowOpen = true
+
+ImageButton.MouseButton1Click:Connect(function()
+
+    local shrink = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,55,0,55)}
+    )
+
+    local grow = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,65,0,65)}
+    )
+
+    shrink:Play()
+    shrink.Completed:Wait()
+    grow:Play()
+
+    if WindowOpen then
+        Window:Close()
+    else
+        Window:Open()
+    end
+
+    WindowOpen = not WindowOpen
+end)
+
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function UpdateDrag(input)
+    local delta = input.Position - dragStart
+
+    ImageButton.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+ImageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
+        dragging = true
+        dragStart = input.Position
+        startPos = ImageButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
 
-print("🚀 Standalone script started! Sanity will auto-execute every second.")
-print("ℹ️ The script is running in the background. Check console for status.")
+ImageButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        UpdateDrag(input)
+    end
+end)
