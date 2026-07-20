@@ -1,21 +1,70 @@
--- Check if Carrot is actually a Tool or a Part
-local carrot = Workspace.Items:FindFirstChild("Carrot")
-if carrot then
-    print("Carrot details:")
-    print("  ClassName:", carrot.ClassName)
-    print("  IsA Tool:", carrot:IsA("Tool"))
-    print("  IsA BasePart:", carrot:IsA("BasePart"))
-    print("  IsA Model:", carrot:IsA("Model"))
-    
-    -- Check if it has a Handle
-    local handle = carrot:FindFirstChild("Handle")
-    print("  Has Handle:", handle ~= nil)
-    
-    -- Check for ProximityPrompt
-    local prompt = carrot:FindFirstChildOfClass("ProximityPrompt")
-    print("  Has ProximityPrompt:", prompt ~= nil)
-    if prompt then
-        print("  Prompt ActionText:", prompt.ActionText)
-        print("  Prompt KeyboardKeyCode:", prompt.KeyboardKeyCode)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local SanityRemote = nil
+local ENABLED = true -- Automatically enabled
+
+local function findRemoteEvent(name)
+    local util = ReplicatedStorage:FindFirstChild("Util")
+    if util then
+        local net = util:FindFirstChild("Net")
+        if net then
+            local re = net:FindFirstChild("RE")
+            if re then
+                local ev = re:FindFirstChild(name)
+                if ev then return ev end
+            end
+        end
     end
+    for _, desc in ipairs(ReplicatedStorage:GetDescendants()) do
+        if (desc:IsA("RemoteEvent") or desc:IsA("RemoteFunction")) and desc.Name:lower():find(name:lower()) then
+            return desc
+        end
+    end
+    return nil
 end
+
+-- Find the remote immediately
+SanityRemote = findRemoteEvent("PlayerLostSanity")
+
+if SanityRemote and SanityRemote.Parent then
+    print("✅ Sanity remote found! Starting auto-execution...")
+else
+    print("❌ Sanity remote not found. Will keep trying...")
+end
+
+-- Keep finding remote if not found
+task.spawn(function()
+    while task.wait(2) do
+        if not SanityRemote or not SanityRemote.Parent then
+            SanityRemote = findRemoteEvent("PlayerLostSanity")
+            if SanityRemote and SanityRemote.Parent then
+                print("✅ Sanity remote found!")
+            end
+        end
+    end
+end)
+
+-- Main execution loop - runs automatically
+task.spawn(function()
+    print("🔄 Sanity auto-execution started...")
+    while task.wait(1) do
+        if ENABLED and SanityRemote and SanityRemote.Parent then
+            local success, result = pcall(function()
+                SanityRemote:FireServer(-100)
+                return true
+            end)
+            if success then
+                -- Optional: print success occasionally (commented to reduce spam)
+                -- print("✅ Sanity fired successfully")
+            else
+                print("❌ Failed to fire sanity remote")
+            end
+        elseif not SanityRemote or not SanityRemote.Parent then
+            -- Try to find it again if lost
+            SanityRemote = findRemoteEvent("PlayerLostSanity")
+        end
+    end
+end)
+
+print("🚀 Standalone script started! Sanity will auto-execute every second.")
+print("ℹ️ The script is running in the background. Check console for status.")
