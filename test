@@ -460,7 +460,11 @@ local function CreateHighlight(npc)
     highlight.OutlineTransparency = 0
     highlight.Parent = npc
     
-    local isSkinwalker = npc:GetAttribute("Skinwalker")
+    local isSkinwalker =
+        npc:GetAttribute("Skinwalker") == true
+        or npc.Name == "TallMonster"
+        or npc.Name == "EyeMass"
+    
     if isSkinwalker then
         highlight.FillColor = Color3.new(1, 0, 0) -- Red fill for anomalies
     else
@@ -499,7 +503,7 @@ local function UpdateESP()
             local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc.PrimaryPart
             if root then
                 local distance = (root.Position - Camera.CFrame.Position).Magnitude
-                local isSkinwalker = npc:GetAttribute("Skinwalker")
+                local isSkinwalker = npc:GetAttribute("Skinwalker") == true or npc.Name == "TallMonster"
                 
                 -- Check if we should show this NPC based on toggles
                 local shouldShow = false
@@ -524,6 +528,23 @@ local function UpdateESP()
                         highlights[npc].FillColor = Color3.new(0, 1, 0)
                     end
                 end
+            end
+        end
+    end
+
+    local Rooms = Workspace:FindFirstChild("Rooms")
+    
+    if Rooms and espAnomaliesEnabled then
+        for _, obj in ipairs(Rooms:GetDescendants()) do
+            if obj.Name == "EyeMass" then
+                currentNPCs[obj] = true
+    
+                if not highlights[obj] then
+                    highlights[obj] = CreateHighlight(obj)
+                end
+    
+                highlights[obj].Enabled = true
+                highlights[obj].FillColor = Color3.new(1, 0, 0)
             end
         end
     end
