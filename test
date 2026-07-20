@@ -106,6 +106,13 @@ Tabs.Discord:Paragraph({
     }
 })
 
+Tabs.Discord:Space()
+
+Tabs.Discord:Paragraph({
+    Title = "Keybind: K",
+    Desc = "Press K to open or close the menu.",
+    Color = "Green",
+})
 
 -- Main Tab
 Tabs.Main = Window:Tab({
@@ -437,8 +444,6 @@ Tabs.Main:Toggle({
         end
     end
 })
-
-
 
 -- ESP Tab
 Tabs.ESP = Window:Tab({
@@ -858,6 +863,148 @@ Tabs.Bring:Button({
         
         -- Teleport back to initial position
         root.CFrame = initialCFrame
+    end
+})
+
+
+
+-- Misc Tab
+Tabs.Misc = Window:Tab({
+    Title = "Misc",
+    Icon = "wrench",
+})
+
+Tabs.Misc:Section({
+    Title = "Player",
+    Icon = "user",
+})
+
+local infiniteSanityEnabled = false
+local infiniteSanityLoop = nil
+
+Tabs.Misc:Toggle({
+    Title = "Infinite Sanity",
+    Value = false,
+    Callback = function(state)
+        infiniteSanityEnabled = state
+
+        if state then
+            WindUI:Notify({
+                Title = "Infinite Sanity",
+                Content = "Infinite Sanity Enabled",
+                Duration = 3,
+                Icon = "check",
+            })
+
+            infiniteSanityLoop = task.spawn(function()
+                while infiniteSanityEnabled do
+                    local args = {
+                        [1] = math.sqrt(-1),
+                        [2] = "ok",
+                        [3] = true,
+                        n = 3,
+                    }
+
+                    game:GetService("ReplicatedStorage")
+                        .Util.Net
+                        :FindFirstChild("RE/PlayerLostSanity")
+                        :FireServer(unpack(args, 1, args.n or #args))
+
+                    task.wait(1)
+                end
+            end)
+
+        else
+            infiniteSanityEnabled = false
+            infiniteSanityLoop = nil
+
+            WindUI:Notify({
+                Title = "Infinite Sanity",
+                Content = "Infinite Sanity Disabled",
+                Duration = 3,
+                Icon = "x",
+            })
+        end
+    end
+})
+
+Tabs.Misc:Section({
+    Title = "Movement",
+    Icon = "move",
+})
+
+local Players = game:GetService("Players")
+
+local walkSpeedEnabled = false
+local walkSpeedValue = 16
+local walkSpeedConnection = nil
+
+local function ApplyWalkSpeed()
+    local character = Players.LocalPlayer.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if walkSpeedEnabled then
+        humanoid.WalkSpeed = walkSpeedValue
+    else
+        humanoid.WalkSpeed = 16
+    end
+end
+
+Tabs.Misc:Toggle({
+    Title = "WalkSpeed",
+    Value = false,
+    Callback = function(state)
+        walkSpeedEnabled = state
+
+        if state then
+            WindUI:Notify({
+                Title = "WalkSpeed",
+                Content = "WalkSpeed Enabled",
+                Duration = 3,
+                Icon = "check",
+            })
+
+            if not walkSpeedConnection then
+                walkSpeedConnection = RunService.Heartbeat:Connect(function()
+                    ApplyWalkSpeed()
+                end)
+            end
+
+        else
+            WindUI:Notify({
+                Title = "WalkSpeed",
+                Content = "WalkSpeed Disabled",
+                Duration = 3,
+                Icon = "x",
+            })
+
+            if walkSpeedConnection then
+                walkSpeedConnection:Disconnect()
+                walkSpeedConnection = nil
+            end
+                
+            ApplyWalkSpeed()
+                
+        end
+    end
+})
+
+Tabs.Misc:Slider({
+    Title = "Speed",
+    Value = {
+        Min = 16,
+        Max = 150,
+        Default = 16,
+    },
+    Callback = function(value)
+        walkSpeedValue = value
+
+        if walkSpeedEnabled then
+            ApplyWalkSpeed()
+        end
     end
 })
 
