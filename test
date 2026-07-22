@@ -485,25 +485,16 @@ Tabs.Farm:Toggle({
 
 -- Shake Function
 local function PerformShake()
-    local rs = game:GetService("ReplicatedStorage")
+    local gui = LocalPlayer:FindFirstChild("PlayerGui")
+    if not gui then return end
 
-    local shake = rs
-        :WaitForChild("resources")
-        :WaitForChild("replicated")
-        :WaitForChild("fishing")
-        :WaitForChild("shakeui")
-        :WaitForChild("safezone")
-        :WaitForChild("shakeui")
-        :WaitForChild("button")
-        :WaitForChild("shake")
-
-    print("Found:", shake:GetFullName())
-
-    local success, err = pcall(function()
-        shake:FireServer()
-    end)
-
-    print("FireServer:", success, err)
+    if gui:FindFirstChild("shakeui") then
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("packages")
+            :WaitForChild("Net")
+            :WaitForChild("RE/LureShake/Shake")
+            :FireServer()
+    end
 end
 
 -- Shake Loop
