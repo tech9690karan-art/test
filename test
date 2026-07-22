@@ -500,7 +500,7 @@ end
 -- Shake Loop
 task.spawn(function()
     while true do
-        task.wait(0.1)
+        task.wait(5)
         if AutoShakeEnabled then
             pcall(PerformShake)
         end
