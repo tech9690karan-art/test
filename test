@@ -497,7 +497,13 @@ local function PerformShake()
         :WaitForChild("button")
         :WaitForChild("shake")
 
-    shake:FireServer()
+    print("Found:", shake:GetFullName())
+
+    local success, err = pcall(function()
+        shake:FireServer()
+    end)
+
+    print("FireServer:", success, err)
 end
 
 -- Shake Loop
