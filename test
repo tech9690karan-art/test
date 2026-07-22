@@ -1,12 +1,1 @@
-for _, obj in ipairs(game:GetDescendants()) do
-    if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
-        if string.find(obj.Name:lower(), "shake") then
-            print("--------------------------------")
-            print("Name:", obj.Name)
-            print("Class:", obj.ClassName)
-            print("Path:", obj:GetFullName())
-        end
-    end
-end
-
-print("Finished searching.")
+print(button.ClassName)
