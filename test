@@ -484,37 +484,26 @@ Tabs.Farm:Toggle({
 })
 
 -- Shake Function
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
 local function PerformShake()
-    local gui = LocalPlayer:FindFirstChild("PlayerGui")
-    if not gui then return end
+    local rs = game:GetService("ReplicatedStorage")
 
-    local shakeui = gui:FindFirstChild("shakeui")
-    if not shakeui then return end
+    local shake = rs
+        :WaitForChild("resources")
+        :WaitForChild("replicated")
+        :WaitForChild("fishing")
+        :WaitForChild("shakeui")
+        :WaitForChild("safezone")
+        :WaitForChild("shakeui")
+        :WaitForChild("button")
+        :WaitForChild("shake")
 
-    local safezone = shakeui:FindFirstChild("safezone")
-    if not safezone then return end
-
-    local button = safezone:FindFirstChild("button")
-    if not button or not button:IsA("ImageButton") then return end
-
-    local pos = button.AbsolutePosition
-    local size = button.AbsoluteSize
-
-    local x = pos.X + size.X / 2
-    local y = pos.Y + size.Y / 2
-
-    VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
-    task.wait()
-    VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
+    shake:FireServer()
 end
 
 -- Shake Loop
 task.spawn(function()
     while true do
-        task.wait(0.05) -- Faster than 0.1
-
+        task.wait(0.1)
         if AutoShakeEnabled then
             pcall(PerformShake)
         end
