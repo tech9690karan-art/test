@@ -483,15 +483,37 @@ Tabs.Farm:Toggle({
     end
 })
 
--- Shake Function with UI check
+-- Shake Function - Alternative approach
 local function PerformShake()
-    -- Check if shake UI is actually showing
     local gui = LocalPlayer:WaitForChild("PlayerGui")
     local shakeui = gui:FindFirstChild("shakeui")
     
-    if not shakeui then return end -- Don't fire if shake UI isn't visible
+    if not shakeui then 
+        shakeFired = false
+        return 
+    end
     
-    -- Now fire the remote
+    if shakeFired then return end
+    
+    -- Check if the shake button is visible/interactable
+    local safezone = shakeui:FindFirstChild("safezone")
+    if not safezone then return end
+    
+    local button = safezone:FindFirstChild("button")
+    if not button then return end
+    
+    -- Check if button is visible (sometimes games hide it initially)
+    if button.Visible == false then return end
+    
+    -- Only fire after a short delay when button appears
+    task.wait(0.15)
+    
+    -- Verify UI still exists
+    if not gui:FindFirstChild("shakeui") then
+        shakeFired = false
+        return
+    end
+    
     local shakeEvent = game:GetService("ReplicatedStorage")
         :WaitForChild("packages")
         :WaitForChild("Net")
@@ -499,6 +521,7 @@ local function PerformShake()
     
     if shakeEvent then
         shakeEvent:FireServer()
+        shakeFired = true
     end
 end
 
