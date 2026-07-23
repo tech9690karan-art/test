@@ -516,26 +516,20 @@ Tabs.Farm:Toggle({
 })
 
 local function PerformReel()
-    local gui = LocalPlayer:WaitForChild("PlayerGui")
-    local reel = gui:FindFirstChild("reel")
+    -- Access the ActiveReel directly
+    local ReelController = require(game:GetService("ReplicatedStorage")
+        :WaitForChild("client")
+        :WaitForChild("legacyControllers")
+        :WaitForChild("ReelController"))
     
-    if not reel then return end
+    local activeReel = ReelController.ActiveReel
     
-    local bar = reel:FindFirstChild("bar")
-    if not bar then return end
+    if not activeReel then return end
+    if not activeReel.active then return end
     
-    local playerbar = bar:FindFirstChild("playerbar")
-    if not playerbar then return end
-    
-    local fish = bar:FindFirstChild("fish")
-    if not fish then return end
-    
-    -- Stretch playerbar to full width
-    playerbar.Size = UDim2.new(1, 0, 1, 0)
-    
-    -- Follow the fish's Y position
-    playerbar.Position = UDim2.new(0.5, 0, fish.Position.Y.Scale, fish.Position.Y.Offset)
-    playerbar.AnchorPoint = Vector2.new(0.5, 0.5)
+    -- Override the internal values that control the bar
+    activeReel.barSize = 1  -- Full width
+    activeReel.barPosition = activeReel.fishPosition  -- Follow fish
 end
 
 task.spawn(function()
