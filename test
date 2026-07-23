@@ -101,7 +101,7 @@ Tabs.Home:Space()
 Tabs.Home:Paragraph({
     Title = "Tired of Key Systems?",
     Desc = "Tired of getting a new key every 24 hours? Buy a key or boost our Discord server to skip the hassle!",
-    Color = "Green",
+    Color = "Gold",
 })
 
 Tabs.Farm:Section({ Title = "Fishing" })
