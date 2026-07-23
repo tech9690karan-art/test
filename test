@@ -505,107 +505,38 @@ task.spawn(function()
     end
 end)
 
--- Auto Reel - Modified Version with 1 Second Delay
 local AutoReelEnabled = false
-local lastPlayerBarPosition = nil
-local movementDetected = false
-local movementTime = 0
-local reelEvent = game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("reelfinished")
-local reelArgs = {100, true}
-
--- Function to get positions
-local function GetReelUI()
-    local gui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-    if not gui then return nil end
-    
-    local reel = gui:FindFirstChild("reel")
-    if not reel then return nil end
-    
-    local bar = reel:FindFirstChild("bar")
-    if not bar then return nil end
-    
-    local playerBar = bar:FindFirstChild("playerbar")
-    local fishLine = bar:FindFirstChild("fish")
-    
-    if not playerBar or not fishLine then return nil end
-    
-    return {
-        playerBar = playerBar,
-        fishLine = fishLine
-    }
-end
 
 Tabs.Farm:Toggle({
     Title = "Auto Reel + Perfect Catch",
     Value = false,
     Callback = function(state)
         AutoReelEnabled = state
-        lastPlayerBarPosition = nil
-        movementDetected = false
-        movementTime = 0
     end
 })
 
--- Modified Reel Loop with 1 Second Delay
+local function PerformReel()
+    local gui = LocalPlayer:WaitForChild("PlayerGui")
+    local reel = gui:FindFirstChild("reel")
+    
+    if not reel then return end
+    
+    local bar = reel:FindFirstChild("bar")
+    if not bar then return end
+    
+    local playerbar = bar:FindFirstChild("playerbar")
+    if not playerbar then return end
+    
+    -- Stretch playerbar to full width and position to left
+    playerbar.Size = UDim2.new(1, 0, playerbar.Size.Y.Scale, playerbar.Size.Y.Offset)
+    playerbar.Position = UDim2.new(0, 0, playerbar.Position.Y.Scale, playerbar.Position.Y.Offset)
+end
+
 task.spawn(function()
-    while task.wait(0.05) do
+    while true do
+        task.wait(0.1)
         if AutoReelEnabled then
-            local uiElements = GetReelUI()
-            if uiElements then
-                local playerBar = uiElements.playerBar
-                local currentPosition = playerBar.Position
-                
-                if not lastPlayerBarPosition then
-                    -- First time detecting the minigame, store initial position
-                    lastPlayerBarPosition = currentPosition
-                    movementDetected = false
-                    movementTime = 0
-                    print("Auto Reel: Minigame detected, monitoring for movement...")
-                else
-                    -- Check if player bar has moved from its initial position
-                    if currentPosition.X.Offset ~= lastPlayerBarPosition.X.Offset or
-                       currentPosition.X.Scale ~= lastPlayerBarPosition.X.Scale then
-                        
-                        if not movementDetected then
-                            -- First time detecting movement
-                            movementDetected = true
-                            movementTime = tick()
-                            print("Auto Reel: Movement detected! Waiting 1 second...")
-                        else
-                            -- Movement already detected, check if 1 second has passed
-                            local timeSinceMovement = tick() - movementTime
-                            if timeSinceMovement >= 1 then
-                                -- 1 second has passed, fire the remote
-                                reelEvent:FireServer(unpack(reelArgs))
-                                print("Auto Reel: 1 second passed! Instant reel fired.")
-                                
-                                -- Reset for next minigame
-                                lastPlayerBarPosition = nil
-                                movementDetected = false
-                                movementTime = 0
-                                task.wait(0.5) -- Small cooldown
-                            end
-                        end
-                    else
-                        -- Player bar hasn't moved yet or returned to original position
-                        if movementDetected then
-                            -- Reset if bar moved back to original position
-                            movementDetected = false
-                            movementTime = 0
-                        end
-                    end
-                end
-            else
-                -- No minigame UI detected, reset tracking
-                lastPlayerBarPosition = nil
-                movementDetected = false
-                movementTime = 0
-            end
-        else
-            -- Auto reel disabled, reset tracking
-            lastPlayerBarPosition = nil
-            movementDetected = false
-            movementTime = 0
+            pcall(PerformReel)
         end
     end
 end)
