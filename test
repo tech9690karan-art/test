@@ -527,10 +527,15 @@ local function PerformReel()
     local playerbar = bar:FindFirstChild("playerbar")
     if not playerbar then return end
     
-    -- Stretch to full width and center at 0, keep original Y
-    playerbar.Size = UDim2.new(1, 0, playerbar.Size.Y.Scale, playerbar.Size.Y.Offset)
-    playerbar.Position = UDim2.new(0.5, 0, playerbar.Position.Y.Scale, playerbar.Position.Y.Offset)
-    playerbar.AnchorPoint = Vector2.new(0.5, 0)
+    local fish = bar:FindFirstChild("fish")
+    if not fish then return end
+    
+    -- Stretch playerbar to full width
+    playerbar.Size = UDim2.new(1, 0, 1, 0)
+    
+    -- Follow the fish's Y position
+    playerbar.Position = UDim2.new(0.5, 0, fish.Position.Y.Scale, fish.Position.Y.Offset)
+    playerbar.AnchorPoint = Vector2.new(0.5, 0.5)
 end
 
 task.spawn(function()
