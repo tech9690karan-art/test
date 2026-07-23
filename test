@@ -101,7 +101,7 @@ Tabs.Home:Space()
 Tabs.Home:Paragraph({
     Title = "Tired of Key Systems?",
     Desc = "Tired of getting a new key every 24 hours? Buy a key or boost our Discord server to skip the hassle!",
-    Color = "#FFD700",
+    Color = "Gold",
 })
 
 Tabs.Farm:Section({ Title = "Fishing" })
@@ -1362,7 +1362,7 @@ local PlatformFollow = false
 
 Tabs.Misc:Toggle({
     Title = "Walk on Water/Air",
-    Description = "Creates invisible platform to walk on water or through air",
+    Desc = "Creates invisible platform to walk on water or through air",
     Value = false,
     Callback = function(state)
         WaterWalkingEnabled = state
@@ -1480,7 +1480,7 @@ local NoClipConnection = nil
 
 Tabs.Misc:Toggle({
     Title = "No Clip",
-    Description = "Walk through walls and objects",
+    Desc = "Walk through walls and objects",
     Value = false,
     Callback = function(state)
         NoClipEnabled = state
