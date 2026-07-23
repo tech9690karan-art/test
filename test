@@ -515,21 +515,34 @@ Tabs.Farm:Toggle({
     end
 })
 
+local ReelController
+
 local function PerformReel()
-    -- Access the ActiveReel directly
-    local ReelController = require(game:GetService("ReplicatedStorage")
-        :WaitForChild("client")
-        :WaitForChild("legacyControllers")
-        :WaitForChild("ReelController"))
+    if not ReelController then
+        ReelController = require(game:GetService("ReplicatedStorage")
+            :WaitForChild("client")
+            :WaitForChild("legacyControllers")
+            :WaitForChild("ReelController"))
+    end
     
     local activeReel = ReelController.ActiveReel
-    
     if not activeReel then return end
     if not activeReel.active then return end
     
-    -- Override the internal values that control the bar
-    activeReel.barSize = 1  -- Full width
-    activeReel.barPosition = activeReel.fishPosition  -- Follow fish
+    local fishPos = activeReel.fishPosition
+    local barPos = activeReel.barPosition
+    
+    -- Move bar towards fish by faking input
+    if barPos < fishPos then
+        activeReel.core.rod.CurrentInputDirection = 1  -- Move right
+    elseif barPos > fishPos then
+        activeReel.core.rod.CurrentInputDirection = -1  -- Move left
+    else
+        activeReel.core.rod.CurrentInputDirection = 0  -- Stay
+    end
+    
+    activeReel.core.rod.CurrentAcceleration = 1
+    activeReel.core.rod.CurrentVelocity = 1
 end
 
 task.spawn(function()
