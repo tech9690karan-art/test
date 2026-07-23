@@ -473,58 +473,32 @@ Tabs.Farm:Toggle({
 })
 
 local AutoShakeEnabled = false
-local shakeFired = false
 
 Tabs.Farm:Toggle({
     Title = "Auto Shake",
     Value = false,
     Callback = function(state)
         AutoShakeEnabled = state
-        shakeFired = false
     end
 })
 
 local function PerformShake()
     local gui = LocalPlayer:WaitForChild("PlayerGui")
     local shakeui = gui:FindFirstChild("shakeui")
-    
-    if not shakeui then 
-        shakeFired = false
-        return 
-    end
-    
-    if shakeFired then return end
-    
-    local safezone = shakeui:FindFirstChild("safezone")
-    if not safezone then return end
-    
-    local button = safezone:FindFirstChild("button")
-    if not button then return end
-    
-    -- Check if button exists and is visible
-    if not button.Visible then return end
-    
-    -- Wait for the cooldown to be ready (0.25 seconds minimum)
-    task.wait(0.3)
-    
-    -- Verify still exists
-    if not gui:FindFirstChild("shakeui") then
-        shakeFired = false
-        return
-    end
-    
-    -- Fire the button's Activated event (this is what the game expects!)
-    if button:IsA("ImageButton") or button:IsA("TextButton") then
-        -- Simulate the Activated event which triggers the onShake function
-        firesignal(button.Activated)
-        shakeFired = true
-        print("Auto Shake: ✓ Activated button")
+    if shakeui then
+        local safezone = shakeui:FindFirstChild("safezone")
+        if safezone then
+            local button = safezone:FindFirstChild("button")
+            if button and button:IsA("ImageButton") then
+                firesignal(button.Activated)
+            end
+        end
     end
 end
 
 task.spawn(function()
     while true do
-        task.wait(0.25) -- Match the game's cooldown timing
+        task.wait(0.1)
         if AutoShakeEnabled then
             pcall(PerformShake)
         end
