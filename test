@@ -1,9 +1,23 @@
 local function DeepDebug()
-    local gui = LocalPlayer:WaitForChild("PlayerGui")
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    
+    if not LocalPlayer then
+        print("❌ LocalPlayer not found")
+        return
+    end
+    
+    local gui = LocalPlayer:FindFirstChild("PlayerGui")
+    
+    if not gui then
+        print("❌ No PlayerGui found")
+        return
+    end
+    
     local shakeui = gui:FindFirstChild("shakeui")
     
     if not shakeui then
-        print("❌ No shakeui found")
+        print("❌ No shakeui found - waiting for fish bite...")
         return
     end
     
@@ -14,7 +28,7 @@ local function DeepDebug()
     -- Print ALL children of shakeui
     print("--- shakeui Children ---")
     for _, child in pairs(shakeui:GetChildren()) do
-        print("•", child.Name, "-", child.ClassName, "- Visible:", child.Visible)
+        print("•", child.Name, "-", child.ClassName, "- Visible:", pcall(function() return child.Visible end))
     end
     
     -- Check safezone
@@ -22,32 +36,26 @@ local function DeepDebug()
     if safezone then
         print("\n--- safezone Children ---")
         for _, child in pairs(safezone:GetChildren()) do
-            print("•", child.Name, "-", child.ClassName, "- Visible:", child.Visible)
+            print("•", child.Name, "-", child.ClassName, "- Visible:", pcall(function() return child.Visible end))
         end
         
         -- Check button
         local button = safezone:FindFirstChild("button")
         if button then
             print("\n--- button Details ---")
-            print("Visible:", button.Visible)
-            print("Active:", button.Active)
-            print("Position:", button.Position)
-            print("Size:", button.Size)
             print("ClassName:", button.ClassName)
+            pcall(function() print("Visible:", button.Visible) end)
+            pcall(function() print("Active:", button.Active) end)
             
             print("\n--- button Children ---")
             for _, child in pairs(button:GetChildren()) do
                 print("•", child.Name, "-", child.ClassName)
             end
-            
-            -- Check if button has any Input events
-            print("\n--- button Connections ---")
-            local connections = getconnections(button.MouseButton1Click) or {}
-            print("MouseButton1Click connections:", #connections)
-            
-            connections = getconnections(button.Activated) or {}
-            print("Activated connections:", #connections)
+        else
+            print("\n❌ No button found in safezone")
         end
+    else
+        print("\n❌ No safezone found")
     end
     
     -- Search ALL RemoteEvents in the entire game
@@ -77,9 +85,23 @@ local function DeepDebug()
     
     -- Try to find any RemoteFunction related to shake
     print("\n--- Searching Shake RemoteFunctions ---")
+    local foundFunc = false
     for _, child in pairs(rs:GetDescendants()) do
         if child:IsA("RemoteFunction") and child.Name:lower():find("shake") then
             print("🔍 FOUND RemoteFunction:", child:GetFullName())
+            foundFunc = true
+        end
+    end
+    
+    if not foundFunc then
+        print("No shake RemoteFunctions found")
+    end
+    
+    -- Also search for BindableEvents
+    print("\n--- Searching BindableEvents ---")
+    for _, child in pairs(rs:GetDescendants()) do
+        if child:IsA("BindableEvent") and child.Name:lower():find("shake") then
+            print("🔍 FOUND BindableEvent:", child:GetFullName())
         end
     end
 end
