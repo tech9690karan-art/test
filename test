@@ -15,26 +15,26 @@ local Window = WindUI:CreateWindow({
     Title = "VEX - " .. gameName,
     Author = "Premium Build",
     Icon = "rbxassetid://86958834463274",
-    Folder = "Vex " .. gameName,
+    Folder = "Vex_Fisch",
     Size = UDim2.fromOffset(500, 350),
     Transparent = false,
     Theme = "Dark",
-    HidePanelBackground = true,
-    NewElements = false,
-    Acrylic = false,
-    HideSearchBar = true,
+    HideSearchBar = false,
+    ScrollBarEnabled = true,
     SideBarWidth = 200,
+    Resizable = true,
+    OpenButton = {
+        Enabled = false,
+    }
 })
 
-Window:EditOpenButton({
-    Enabled = false
-})
+Window:SetToggleKey(Enum.KeyCode.K)
 
 task.delay(13, function()
     WindUI:Notify({
         Title = "VEX",
-        Content = "Join our Discord to get more of the best scripts!",
-        Icon = "users",
+        Content = "Found a bug or have suggestions? Report them on our Discord!",
+        Icon = "message-square",
         Duration = 6
     })
 end)
@@ -51,27 +51,57 @@ local Tabs = {
 Tabs.Home:Section({ Title = "Community" })
 
 Tabs.Home:Paragraph({
-    Title = "Discord",
-    Desc = "Join our Discord to get more of the best scripts and updates!",
+    Title = "Welcome to VEX Scripts!",
+    Desc = "Get the latest scripts, updates, announcements, and support by joining our Discord community.",
     Image = "rbxassetid://82233980503615",
     ImageSize = 60,
     Color = "Red",
     Buttons = {
         {
-            Title = "Copy Invite",
-            Icon = "copy",
-            Variant = "Tertiary",
+            Title = "Join Discord",
+            Icon = "geist:logo-discord",
             Callback = function()
-                setclipboard("https://discord.gg/FvMePtyJrq")
-                WindUI:Notify({
-                    Title = "Copied!",
-                    Content = "Discord invite copied to clipboard",
-                    Duration = 5,
-                    Icon = "clipboard-check",
-                })
+                if setclipboard then
+                    setclipboard("https://discord.gg/FvMePtyJrq")
+
+                    Window:Dialog({
+                        Title = "Discord Link Copied",
+                        Icon = "geist:logo-discord",
+                        Content = "The Discord invite link has been copied to your clipboard.",
+                        Buttons = {
+                            {
+                                Title = "OK",
+                                Icon = "check"
+                            }
+                        }
+                    })
+                else
+                    WindUI:Notify({
+                        Title = "Clipboard Not Supported",
+                        Content = "Your executor doesn't support copying to the clipboard.",
+                        Duration = 4,
+                        Icon = "alert-triangle",
+                    })
+                end
             end
         }
     }
+})
+
+Tabs.Home:Space()
+
+Tabs.Home:Paragraph({
+    Title = "Keybind: K",
+    Desc = "Press K to open or close the menu.",
+    Color = "Green",
+})
+
+Tabs.Home:Space()
+
+Tabs.Home:Paragraph({
+    Title = "Tired of Key Systems?",
+    Desc = "Tired of getting a new key every 24 hours? Buy a key or boost our Discord server to skip the hassle!",
+    Color = "#FFD700",
 })
 
 Tabs.Farm:Section({ Title = "Fishing" })
@@ -83,6 +113,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local function GetFishingTool()
     local rodName
@@ -134,6 +165,7 @@ end
 -- Auto Equip Rod
 Tabs.Farm:Toggle({
     Title = "Auto Equip Rod",
+    Desc = "Automatically equips the fishing rod from your inventory",
     Value = false,
     Callback = function(state)
         if state then
@@ -377,7 +409,6 @@ local function ReleaseCast()
             1
         )
         IsHoldingCast = false
-        print("VEX IS BEST!")
     end)
 end
 
@@ -450,6 +481,7 @@ end
 -- Perfect Auto Cast Toggle
 Tabs.Farm:Toggle({
     Title = "Auto Perfect Cast",
+    Desc = "Automatically casts with perfect timing (Please make sure the rod is equipped before turning this ON)",
     Value = false,
     Callback = function(state)
         AutoCastEnabled = state
@@ -476,6 +508,7 @@ local AutoShakeEnabled = false
 
 Tabs.Farm:Toggle({
     Title = "Auto Shake",
+    Desc = "Automatically completes the shake minigame",
     Value = false,
     Callback = function(state)
         AutoShakeEnabled = state
@@ -508,41 +541,29 @@ end)
 local AutoReelEnabled = false
 
 Tabs.Farm:Toggle({
-    Title = "Auto Reel + Perfect Catch",
+    Title = "Auto Perfect Reel",
+    Desc = "Automatically reels in fish with perfect catch timing",
     Value = false,
     Callback = function(state)
         AutoReelEnabled = state
     end
 })
 
-local ReelController
-
 local function PerformReel()
-    if not ReelController then
-        ReelController = require(game:GetService("ReplicatedStorage")
-            :WaitForChild("client")
-            :WaitForChild("legacyControllers")
-            :WaitForChild("ReelController"))
-    end
+    -- Access the ActiveReel directly
+    local ReelController = require(game:GetService("ReplicatedStorage")
+        :WaitForChild("client")
+        :WaitForChild("legacyControllers")
+        :WaitForChild("ReelController"))
     
     local activeReel = ReelController.ActiveReel
+    
     if not activeReel then return end
     if not activeReel.active then return end
     
-    local fishPos = activeReel.fishPosition
-    local barPos = activeReel.barPosition
-    
-    -- Move bar towards fish by faking input
-    if barPos < fishPos then
-        activeReel.core.rod.CurrentInputDirection = 1  -- Move right
-    elseif barPos > fishPos then
-        activeReel.core.rod.CurrentInputDirection = -1  -- Move left
-    else
-        activeReel.core.rod.CurrentInputDirection = 0  -- Stay
-    end
-    
-    activeReel.core.rod.CurrentAcceleration = 1
-    activeReel.core.rod.CurrentVelocity = 1
+    -- Override the internal values that control the bar
+    activeReel.barSize = 1  -- Full width
+    activeReel.barPosition = activeReel.fishPosition  -- Follow fish
 end
 
 task.spawn(function()
@@ -552,18 +573,6 @@ task.spawn(function()
         end
     end
 end)
-
--- // Reel Remote
-local reelEvent = game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("reelfinished")
-local reelArgs = {100, true}
-
--- // Instant Reel Button
-Tabs.Farm:Button({
-    Title = "Instant Reel + Perfect Catch",
-    Callback = function()
-        reelEvent:FireServer(unpack(reelArgs))
-    end
-})
 
 Tabs.Farm:Section({ Title = "Equipment Rod" })
 
@@ -717,6 +726,7 @@ Tabs.Farm:Slider({
 
 Tabs.Farm:Toggle({
     Title = "Enable Auto Sell",
+    Desc = "Automatically sells all fish",
     Value = false,
     Callback = function(state)
         AutoSellEnabled = state
@@ -781,6 +791,7 @@ Tabs.Shop:Dropdown({
 
 Tabs.Shop:Toggle({
     Title = "Auto Buy Crate",
+    Desc = "Automatically purchases selected crates when you have enough currency",
     Value = false,
     Callback = function(state)
         AutoPurchase = state
@@ -1413,6 +1424,7 @@ local InfiniteO2Enabled = false
 
 Tabs.Misc:Toggle({
     Title = "Infinite Oxygen",
+    Desc = "Never run out of oxygen while underwater",
     Value = false,
     Callback = function(state)
         InfiniteO2Enabled = state
@@ -1555,6 +1567,7 @@ local AntiAFKEnabled = false
 
 Tabs.Misc:Toggle({
     Title = "Anti AFK",
+    Desc = "Prevents you from being kicked for being idle",
     Value = false,
     Callback = function(state)
         AntiAFKEnabled = state
@@ -1578,7 +1591,6 @@ Tabs.Misc:Toggle({
 })
 
 -- Anti AFK Loop
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local lastAFKTime = tick()
 
 task.spawn(function()
@@ -1610,10 +1622,14 @@ task.spawn(function()
     end
 end)
 
--- Floating button
-local TweenService = game:GetService("TweenService")
+-- Select first tab
+Window:SelectTab(1)
+
+-- Floating Open/Close Button
 
 local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HospitalFloatingButton"
+ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = game.CoreGui
 
 local ImageButton = Instance.new("ImageButton")
@@ -1627,14 +1643,21 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = ImageButton
 
-local WindowOpen = false
+local WindowOpen = true
+
 ImageButton.MouseButton1Click:Connect(function()
-    local shrink = TweenService:Create(ImageButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 50, 0, 50)
-    })
-    local grow = TweenService:Create(ImageButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 60, 0, 60)
-    })
+
+    local shrink = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,55,0,55)}
+    )
+
+    local grow = TweenService:Create(
+        ImageButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0,65,0,65)}
+    )
 
     shrink:Play()
     shrink.Completed:Wait()
@@ -1645,45 +1668,51 @@ ImageButton.MouseButton1Click:Connect(function()
     else
         Window:Open()
     end
+
     WindowOpen = not WindowOpen
 end)
 
-local UserInputService = game:GetService("UserInputService")
-local isDragging = false
-local dragInput, dragStart, startPosition
+local dragging = false
+local dragInput
+local dragStart
+local startPos
 
-local function updatePosition(input)
+local function UpdateDrag(input)
     local delta = input.Position - dragStart
+
     ImageButton.Position = UDim2.new(
-        startPosition.X.Scale, startPosition.X.Offset + delta.X,
-        startPosition.Y.Scale, startPosition.Y.Offset + delta.Y
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
     )
 end
 
 ImageButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
-        isDragging = true
+
+        dragging = true
         dragStart = input.Position
-        startPosition = ImageButton.Position
+        startPos = ImageButton.Position
 
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                isDragging = false
+                dragging = false
             end
         end)
     end
 end)
 
 ImageButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    if input.UserInputType == Enum.UserInputType.MouseMovement
     or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and isDragging then
-        updatePosition(input)
+    if dragging and input == dragInput then
+        UpdateDrag(input)
     end
 end)
