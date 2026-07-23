@@ -483,45 +483,29 @@ Tabs.Farm:Toggle({
     end
 })
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ShakeRemote = ReplicatedStorage
-    :WaitForChild("packages")
-    :WaitForChild("Net")
-    :WaitForChild("RE/LureShake/Shake")
-
+-- Shake Function with UI check
 local function PerformShake()
-    local gui = LocalPlayer:FindFirstChild("PlayerGui")
-    if not gui then
-        return
+    -- Check if shake UI is actually showing
+    local gui = LocalPlayer:WaitForChild("PlayerGui")
+    local shakeui = gui:FindFirstChild("shakeui")
+    
+    if not shakeui then return end -- Don't fire if shake UI isn't visible
+    
+    -- Now fire the remote
+    local shakeEvent = game:GetService("ReplicatedStorage")
+        :WaitForChild("packages")
+        :WaitForChild("Net")
+        :WaitForChild("RE/LureShake/Shake")
+    
+    if shakeEvent then
+        shakeEvent:FireServer()
     end
-
-    local shakeGui = gui:FindFirstChild("shakeui")
-    if not shakeGui or not shakeGui.Enabled then
-        return
-    end
-
-    local safezone = shakeGui:FindFirstChild("safezone")
-    if not safezone then
-        return
-    end
-
-    local button = safezone:FindFirstChildWhichIsA("ImageButton")
-    if not button then
-        return
-    end
-
-    -- Don't fire until the button is actually visible
-    if button.AbsoluteSize.X <= 0 then
-        return
-    end
-
-    ShakeRemote:FireServer()
 end
 
+-- Shake Loop
 task.spawn(function()
     while true do
-        task.wait(0.25) -- check frequently
-
+        task.wait(0.1)
         if AutoShakeEnabled then
             pcall(PerformShake)
         end
