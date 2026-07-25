@@ -209,13 +209,12 @@ if type(userStats.gameExecutions) ~= "table" then
     userStats.gameExecutions = {}
 end
 
--- ALWAYS increment total loader executions (every execution)
-userStats.totalLoaderExecutions = (userStats.totalLoaderExecutions or 0) + 1
-
 -- ONLY increment game execution if the game is supported
 local gameIdStr = tostring(id)
 if scriptUrl then
     userStats.gameExecutions[gameIdStr] = (userStats.gameExecutions[gameIdStr] or 0) + 1
+
+    userStats.totalLoaderExecutions = (userStats.totalLoaderExecutions or 0) + 1
 end
 
 -- Save ONLY this user's data back to Firebase
