@@ -16,6 +16,21 @@ local games = {
     [10148749921] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/animal%20hospital", -- Animal Hospital
 }
 
+-- Game Names for Display
+local gameNames = {
+    [7326934954] = "99 Nights in the Forest",
+    [8316902627] = "Plants Vs Brainrots",
+    [5750914919] = "Fisch",
+    [7018190066] = "Dead Rails",
+    [4777817887] = "Blade Ball",
+    [703124385] = "Tower of Hell",
+    [7709344486] = "Steal a Brainrot",
+    [994732206] = "Blox Fruits",
+    [10200395747] = "Grow a Garden 2",
+    [66654135] = "Murder Mystery 2",
+    [10148749921] = "Animal Hospital"
+}
+
 --[[ DISCORD ]]
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1530499188813463642/LnHySukX7T-U2W3bgvCImcNo_fMhzlQSSpe2zKxV80RVpSRgoeM3LX7Xxr-w5LnVPpwh"
 
@@ -50,7 +65,7 @@ local function sendToDiscord(message, embed)
     pcall(function()
         local payload
         if embed then
-            payload = { embeds = { embed } }  -- embed is a single table, wrap in array
+            payload = { embeds = { embed } }
         else
             payload = { content = message }
         end
@@ -127,6 +142,30 @@ local function getUserLocation()
     return location
 end
 
+--[[ Calculate Global Stats from All Users ]]
+local function calculateGlobalStats(allUserData)
+    local globalStats = {
+        totalLoaderExecutions = 0,
+        gameExecutions = {}
+    }
+    
+    if type(allUserData) ~= "table" then
+        return globalStats
+    end
+    
+    for userId, userData in pairs(allUserData) do
+        globalStats.totalLoaderExecutions = globalStats.totalLoaderExecutions + (userData.totalLoaderExecutions or 0)
+        
+        if type(userData.gameExecutions) == "table" then
+            for gameId, count in pairs(userData.gameExecutions) do
+                globalStats.gameExecutions[gameId] = (globalStats.gameExecutions[gameId] or 0) + count
+            end
+        end
+    end
+    
+    return globalStats
+end
+
 --[[ Main Logic ]]
 local id = game.GameId
 local notifId = game.PlaceId
@@ -150,31 +189,91 @@ end)
 -- Get user location
 local location = getUserLocation()
 
---[[ FIREBASE: GET AND UPDATE GLOBAL STATS ]]
+--[[ FIREBASE: GET AND UPDATE USER STATS (PER USER ONLY) ]]
 local firebaseKey = userId
-local globalData = getFirebaseData(STATS_PATH) or {}
-local userStats = globalData[firebaseKey] or { totalLoaderExecutions = 0, gameExecutions = {} }
+local userPath = STATS_PATH .. "/" .. firebaseKey
 
--- Increment total loader executions
+-- Only read this user's data
+local userStats = getFirebaseData(userPath)
+
+-- If no data exists, create a new stats table
+if type(userStats) ~= "table" then
+    userStats = {
+        totalLoaderExecutions = 0,
+        gameExecutions = {}
+    }
+end
+
+-- Ensure gameExecutions exists
+if type(userStats.gameExecutions) ~= "table" then
+    userStats.gameExecutions = {}
+end
+
+-- ALWAYS increment total loader executions (every execution)
 userStats.totalLoaderExecutions = (userStats.totalLoaderExecutions or 0) + 1
 
--- Increment game-specific execution count
+-- ONLY increment game execution if the game is supported
 local gameIdStr = tostring(id)
-userStats.gameExecutions[gameIdStr] = (userStats.gameExecutions[gameIdStr] or 0) + 1
+if scriptUrl then
+    userStats.gameExecutions[gameIdStr] = (userStats.gameExecutions[gameIdStr] or 0) + 1
+end
 
--- Save the updated stats back to Firebase
-globalData[firebaseKey] = userStats
-updateFirebaseData(STATS_PATH, globalData)
+-- Save ONLY this user's data back to Firebase
+updateFirebaseData(userPath, userStats)
 
---[[ SEND TO DISCORD WITH PERMANENT STATS ]]
+--[[ WAIT FOR FIREBASE WRITE TO COMPLETE ]]
+task.wait(0.5)
+
+--[[ CALCULATE GLOBAL STATS FROM ALL USERS ]]
+local allUserData = getFirebaseData(STATS_PATH)
+local globalStats = calculateGlobalStats(allUserData)
+
+--[[ BUILD GAME EXECUTION LIST FOR GLOBAL STATS ]]
+local gameExecutionList = {}
+local sortedGameIds = {}
+
+-- Collect all game IDs that have executions
+for gameId, count in pairs(globalStats.gameExecutions) do
+    if count > 0 then
+        table.insert(sortedGameIds, gameId)
+    end
+end
+
+-- Sort by execution count (highest first)
+table.sort(sortedGameIds, function(a, b)
+    return (globalStats.gameExecutions[a] or 0) > (globalStats.gameExecutions[b] or 0)
+end)
+
+-- Build the list string
+for i, gameId in ipairs(sortedGameIds) do
+    local count = globalStats.gameExecutions[gameId] or 0
+    local name = gameNames[tonumber(gameId)] or "Unknown Game"
+    if i <= 10 then
+        table.insert(gameExecutionList, string.format("`%s` - **%s**", count, name))
+    end
+end
+
+local gameExecutionText = table.concat(gameExecutionList, "\n")
+if gameExecutionText == "" then
+    gameExecutionText = "No executions yet"
+end
+
+-- Determine status for display
+local statusText = "⚠️ **UNSUPPORTED**"
+if scriptUrl then
+    statusText = "✅ **SUCCESS**"
+end
+
+--[[ SEND TO DISCORD WITH PERMANENT STATS + GLOBAL TOTALS ]]
 local embed = {
     title = "📊 Script Execution Report",
     color = scriptUrl and 3066993 or 15844367,
     fields = {
+        -- Per User Stats
         { name = "👤 User", value = string.format("**%s**", userName), inline = true },
         { name = "🆔 User ID", value = string.format("`%s`", userId), inline = true },
         { name = "🎮 Game", value = string.format("**%s**", gameName), inline = true },
-        { name = "📌 Status", value = scriptUrl and "✅ **SUCCESS**" or "⚠️ **UNSUPPORTED**", inline = true },
+        { name = "📌 Status", value = statusText, inline = true },
         { name = "🆔 Game ID", value = string.format("`%s`", id), inline = true },
         { name = "🏷️ Place ID", value = string.format("`%s`", game.PlaceId), inline = true },
         {
@@ -192,15 +291,37 @@ local embed = {
             value = string.format("**Executed:** %s", os.date("%Y-%m-%d %H:%M:%S")),
             inline = true
         },
+        -- Per User Execution Counts
         {
-            name = "📊 Permanent Loader Executions",
+            name = "📊 User Loader Executions",
             value = string.format("`%s`", userStats.totalLoaderExecutions),
             inline = true
         },
         {
-            name = "🎮 Permanent Game Executions",
-            value = string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName),
+            name = "🎮 User Game Executions",
+            value = scriptUrl and string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName) or "`0` (Unsupported)",
             inline = true
+        },
+        -- Global Stats (Calculated from all users)
+        {
+            name = "━━━━━━ 🌍 GLOBAL STATS ━━━━━━",
+            value = "All users combined",
+            inline = false
+        },
+        {
+            name = "📊 Total Loader Executions",
+            value = string.format("`%s`", globalStats.totalLoaderExecutions),
+            inline = true
+        },
+        {
+            name = "🎮 Total Games Executed",
+            value = string.format("`%s`", #sortedGameIds),
+            inline = true
+        },
+        {
+            name = "📋 Per-Game Executions",
+            value = gameExecutionText,
+            inline = false
         }
     },
     footer = {
