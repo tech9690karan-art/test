@@ -229,33 +229,65 @@ local allUserData = getFirebaseData(STATS_PATH)
 local globalStats = calculateGlobalStats(allUserData)
 
 --[[ BUILD GAME EXECUTION LIST FOR GLOBAL STATS ]]
-local gameExecutionList = {}
-local sortedGameIds = {}
+local globalGameList = {}
+local sortedGlobalGameIds = {}
 
 -- Collect all game IDs that have executions
 for gameId, count in pairs(globalStats.gameExecutions) do
     if count > 0 then
-        table.insert(sortedGameIds, gameId)
+        table.insert(sortedGlobalGameIds, gameId)
     end
 end
 
 -- Sort by execution count (highest first)
-table.sort(sortedGameIds, function(a, b)
+table.sort(sortedGlobalGameIds, function(a, b)
     return (globalStats.gameExecutions[a] or 0) > (globalStats.gameExecutions[b] or 0)
 end)
 
 -- Build the list string
-for i, gameId in ipairs(sortedGameIds) do
+for i, gameId in ipairs(sortedGlobalGameIds) do
     local count = globalStats.gameExecutions[gameId] or 0
     local name = gameNames[tonumber(gameId)] or "Unknown Game"
     if i <= 10 then
-        table.insert(gameExecutionList, string.format("`%s` - **%s**", count, name))
+        table.insert(globalGameList, string.format("`%s` - **%s**", count, name))
     end
 end
 
-local gameExecutionText = table.concat(gameExecutionList, "\n")
-if gameExecutionText == "" then
-    gameExecutionText = "No executions yet"
+local globalGameText = table.concat(globalGameList, "\n")
+if globalGameText == "" then
+    globalGameText = "No executions yet"
+end
+
+--[[ BUILD USER GAME EXECUTION LIST ]]
+local userGameExecutionList = {}
+local sortedUserGameIds = {}
+
+-- Collect games this user has executed
+for gameId, count in pairs(userStats.gameExecutions) do
+    if count > 0 then
+        table.insert(sortedUserGameIds, gameId)
+    end
+end
+
+-- Sort highest -> lowest
+table.sort(sortedUserGameIds, function(a, b)
+    return (userStats.gameExecutions[a] or 0) > (userStats.gameExecutions[b] or 0)
+end)
+
+-- Build display
+for _, gameId in ipairs(sortedUserGameIds) do
+    local count = userStats.gameExecutions[gameId]
+    local name = gameNames[tonumber(gameId)] or ("Unknown (" .. gameId .. ")")
+    
+    table.insert(userGameExecutionList,
+        string.format("`%d` - **%s**", count, name)
+    )
+end
+
+local userGameExecutionText = table.concat(userGameExecutionList, "\n")
+
+if userGameExecutionText == "" then
+    userGameExecutionText = "No supported games played"
 end
 
 -- Determine status for display
@@ -302,9 +334,15 @@ local embed = {
             value = scriptUrl and string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName) or "`0` (Unsupported)",
             inline = true
         },
+        -- User's All Games
+        {
+            name = "📋 User Game History",
+            value = userGameExecutionText,
+            inline = false
+        },
         -- Global Stats (Calculated from all users)
         {
-            name = "━━━━━━ 🌍 GLOBAL STATS ━━━━━━",
+            name = "━━━━━━ 🌍 OVERALL STATS ━━━━━━",
             value = "All users combined",
             inline = false
         },
@@ -315,12 +353,12 @@ local embed = {
         },
         {
             name = "🎮 Total Games Executed",
-            value = string.format("`%s`", #sortedGameIds),
+            value = string.format("`%s`", #sortedGlobalGameIds),
             inline = true
         },
         {
             name = "📋 Per-Game Executions",
-            value = gameExecutionText,
+            value = globalGameText,
             inline = false
         }
     },
