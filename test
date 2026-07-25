@@ -19,9 +19,21 @@ local games = {
 --[[ Discord Webhook ]]
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1530499188813463642/LnHySukX7T-U2W3bgvCImcNo_fMhzlQSSpe2zKxV80RVpSRgoeM3LX7Xxr-w5LnVPpwh"
 
+--[[ Execution Counters ]]
+local stats = {
+    totalLoaderExecutions = 0,
+    gameExecutions = {}
+}
+
+-- Load previous stats from shared table
+pcall(function()
+    if shared and shared.stats then
+        stats = shared.stats
+    end
+end)
+
 --[[ Functions ]]
 local function notify(title, text)
-    -- Simple in-game notification (customize as needed)
     pcall(function()
         game.StarterGui:SetCore("SendNotification", {
             Title = title;
@@ -31,7 +43,24 @@ local function notify(title, text)
     end)
 end
 
-local function sendToDiscord(userId, userName, gameId, gameName, status, errorMsg)
+local function getGameNameById(gameId)
+    local gameNames = {
+        [7326934954] = "99 Nights in the Forest",
+        [8316902627] = "Plants Vs Brainrots",
+        [5750914919] = "Fisch",
+        [7018190066] = "Dead Rails",
+        [4777817887] = "Blade Ball",
+        [703124385] = "Tower of Hell",
+        [7709344486] = "Steal a Brainrot",
+        [994732206] = "Blox Fruits",
+        [10200395747] = "Grow a Garden 2",
+        [66654135] = "Murder Mystery 2",
+        [10148749921] = "Animal Hospital"
+    }
+    return gameNames[gameId] or "Unknown Game"
+end
+
+local function sendToDiscord(userId, userName, gameId, gameName, status, errorMsg, loaderCount, gameCount)
     pcall(function()
         local http = game:GetService("HttpService")
         
@@ -69,6 +98,16 @@ local function sendToDiscord(userId, userName, gameId, gameName, status, errorMs
                         name = "🏷️ Place ID",
                         value = string.format("`%s`", game.PlaceId),
                         inline = true
+                    },
+                    {
+                        name = "📊 Loader Executions",
+                        value = string.format("`%s`", loaderCount),
+                        inline = true
+                    },
+                    {
+                        name = "🎮 Game Executions",
+                        value = string.format("`%s` (%s)", gameCount, gameName),
+                        inline = true
                     }
                 },
                 footer = {
@@ -102,6 +141,9 @@ local gameName = "Unknown"
 local userId = "Unknown"
 local userName = "Unknown"
 
+-- Increment total loader executions
+stats.totalLoaderExecutions = (stats.totalLoaderExecutions or 0) + 1
+
 -- Get user data with pcall
 pcall(function()
     local player = game:GetService("Players").LocalPlayer
@@ -119,6 +161,17 @@ end)
 if scriptUrl then
     notify("STATUS:", "Detected game: " .. gameName)
     
+    -- Increment game-specific execution count
+    local gameIdStr = tostring(id)
+    stats.gameExecutions[gameIdStr] = (stats.gameExecutions[gameIdStr] or 0) + 1
+    
+    -- Save stats
+    pcall(function()
+        if shared then
+            shared.stats = stats
+        end
+    end)
+    
     local success, err = pcall(function()
         loadstring(game:HttpGet(scriptUrl))()
     end)
@@ -126,17 +179,44 @@ if scriptUrl then
     if success then
         notify("STATUS:", "Loaded successfully!")
         pcall(function()
-            sendToDiscord(userId, userName, id, gameName, "success", nil)
+            sendToDiscord(
+                userId, 
+                userName, 
+                id, 
+                gameName, 
+                "success", 
+                nil,
+                stats.totalLoaderExecutions,
+                stats.gameExecutions[gameIdStr]
+            )
         end)
     else
         notify("STATUS:", "Error loading script!")
         pcall(function()
-            sendToDiscord(userId, userName, id, gameName, "error", tostring(err))
+            sendToDiscord(
+                userId, 
+                userName, 
+                id, 
+                gameName, 
+                "error", 
+                tostring(err),
+                stats.totalLoaderExecutions,
+                stats.gameExecutions[gameIdStr]
+            )
         end)
     end
 else
     notify("STATUS:", "Game not supported!")
     pcall(function()
-        sendToDiscord(userId, userName, id, gameName, "unsupported", nil)
+        sendToDiscord(
+            userId, 
+            userName, 
+            id, 
+            gameName, 
+            "unsupported", 
+            nil,
+            stats.totalLoaderExecutions,
+            0
+        )
     end)
 end
