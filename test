@@ -20,8 +20,8 @@ local games = {
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1530499188813463642/LnHySukX7T-U2W3bgvCImcNo_fMhzlQSSpe2zKxV80RVpSRgoeM3LX7Xxr-w5LnVPpwh"
 
 --[[ FIREBASE CONFIGURATION ]]
-local FIREBASE_URL = "https://myscripttracker-2ed86-default-rtdb.firebaseio.com/" -- PASTE YOUR FIREBASE URL HERE!
-local STATS_PATH = "scriptStats" -- This is like a folder in your database
+local FIREBASE_URL = "https://myscripttracker-2ed86-default-rtdb.firebaseio.com/"
+local STATS_PATH = "scriptStats"
 
 --[[ Find working request function ]]
 local function getRequestFunction()
@@ -59,7 +59,7 @@ local function sendToDiscord(message, embedData)
     end)
 end
 
---[[ FIREBASE CORE FUNCTIONS ]]
+--[[ FIREBASE CORE FUNCTIONS - FIXED ]]
 local function getFirebaseData(path)
     local url = string.format("%s/%s.json", FIREBASE_URL, path)
     local success, result = pcall(function()
@@ -70,11 +70,23 @@ local function getFirebaseData(path)
             return http:GetAsync(url)
         end
     end)
-    if success and result then
-        local decoded, err = pcall(http.JSONDecode, http, result)
-        return decoded
+    
+    -- If request failed or result is empty, return empty table
+    if not success or not result or result == "" or result == "null" then
+        return {}
     end
-    return nil
+    
+    -- Try to decode JSON
+    local success2, decoded = pcall(function()
+        return http:JSONDecode(result)
+    end)
+    
+    -- If decoding failed or result is not a table, return empty table
+    if not success2 or type(decoded) ~= "table" then
+        return {}
+    end
+    
+    return decoded
 end
 
 local function updateFirebaseData(path, data)
@@ -132,7 +144,7 @@ end)
 local location = getUserLocation()
 
 --[[ FIREBASE: GET AND UPDATE GLOBAL STATS ]]
-local firebaseKey = userId -- Use UserId as the key to track per user
+local firebaseKey = userId
 local globalData = getFirebaseData(STATS_PATH) or {}
 local userStats = globalData[firebaseKey] or { totalLoaderExecutions = 0, gameExecutions = {} }
 
