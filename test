@@ -1,390 +1,48 @@
--- Universal Script Loader
--- Supports multiple games and auto-detects which one to load.
-
---[[ Configuration ]]
-local games = {
-    [7326934954] = "https://raw.githubusercontent.com/vex9690/vex/refs/heads/main/99", -- 99 Nights in the Forest
-    [8316902627] = "https://raw.githubusercontent.com/vex9690/vex/refs/heads/main/pvsb", -- Plants Vs Brainrots
-    [5750914919] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/fuh", -- Fisch
-    [7018190066] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/dr", -- Dead Rails
-    [4777817887] = "https://raw.githubusercontent.com/vex9690/vex/refs/heads/main/bb", -- Blade Ball
-    [703124385] = "https://raw.githubusercontent.com/vex9690/vex/refs/heads/main/toh", -- Tower of Hell
-    [7709344486] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/sab", -- Steal a Brainrot
-    [994732206] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/blx%20fruits", -- Blox Fruits
-    [10200395747] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/gag2", -- Grow a Garden 2
-    [66654135] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/mm2", -- Murder Mystery 2
-    [10148749921] = "https://raw.githubusercontent.com/vex9690/niga/refs/heads/main/animal%20hospital", -- Animal Hospital
-}
-
--- Game Names for Display
-local gameNames = {
-    [7326934954] = "99 Nights in the Forest",
-    [8316902627] = "Plants Vs Brainrots",
-    [5750914919] = "Fisch",
-    [7018190066] = "Dead Rails",
-    [4777817887] = "Blade Ball",
-    [703124385] = "Tower of Hell",
-    [7709344486] = "Steal a Brainrot",
-    [994732206] = "Blox Fruits",
-    [10200395747] = "Grow a Garden 2",
-    [66654135] = "Murder Mystery 2",
-    [10148749921] = "Animal Hospital"
-}
-
---[[ DISCORD ]]
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1530499188813463642/LnHySukX7T-U2W3bgvCImcNo_fMhzlQSSpe2zKxV80RVpSRgoeM3LX7Xxr-w5LnVPpwh"
-
---[[ FIREBASE CONFIGURATION ]]
-local FIREBASE_URL = "https://myscripttracker-2ed86-default-rtdb.firebaseio.com/"
-local STATS_PATH = "scriptStats"
-
---[[ Find working request function ]]
-local function getRequestFunction()
-    if syn and syn.request then return syn.request end
-    if request then return request end
-    if http and http.request then return http.request end
-    if http_request then return http_request end
-    if fluxus and fluxus.request then return fluxus.request end
-    return nil
-end
-local requestFunc = getRequestFunction()
-local http = game:GetService("HttpService")
-
---[[ Functions ]]
-local function notify(title, text)
-    pcall(function()
-        game.StarterGui:SetCore("SendNotification", {
-            Title = title;
-            Text = text;
-            Duration = 5;
-        })
-    end)
-end
-
-local function sendToDiscord(message, embed)
-    pcall(function()
-        local payload
-        if embed then
-            payload = { embeds = { embed } }
+local function DebugShake()
+    local gui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+    local shakeui = gui:FindFirstChild("shakeui")
+    
+    if not shakeui then
+        print("❌ No shakeui found")
+        return
+    end
+    
+    print("=== SHAKE UI STRUCTURE ===")
+    for _, child in pairs(shakeui:GetDescendants()) do
+        print(child:GetFullName(), "-", child.ClassName)
+    end
+    
+    print("\n=== CHECKING BUTTON ===")
+    local safezone = shakeui:FindFirstChild("safezone")
+    if safezone then
+        local button = safezone:FindFirstChild("button")
+        if button then
+            print("Button ClassName:", button.ClassName)
+            print("Button Visible:", button.Visible)
+            
+            -- Check if Activated event exists
+            local success, result = pcall(function()
+                return button.Activated
+            end)
+            print("Activated event exists:", success)
+            
+            -- Check all connections
+            local connections = getconnections(button.Activated)
+            print("Activated connections:", #connections)
         else
-            payload = { content = message }
+            print("❌ No button found")
         end
-        local json = http:JSONEncode(payload)
-
-        if requestFunc then
-            requestFunc({
-                Url = WEBHOOK_URL,
-                Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
-                Body = json
-            })
-        else
-            http:PostAsync(WEBHOOK_URL, json)
-        end
-    end)
-end
-
---[[ FIREBASE CORE FUNCTIONS ]]
-local function getFirebaseData(path)
-    local url = string.format("%s/%s.json", FIREBASE_URL, path)
-    local success, result = pcall(function()
-        if requestFunc then
-            local response = requestFunc({ Url = url, Method = "GET" })
-            return response and response.Body
-        else
-            return http:GetAsync(url)
-        end
-    end)
-    
-    if not success or not result or result == "" or result == "null" then
-        return {}
-    end
-    
-    local success2, decoded = pcall(function()
-        return http:JSONDecode(result)
-    end)
-    
-    if not success2 or type(decoded) ~= "table" then
-        return {}
-    end
-    
-    return decoded
-end
-
-local function updateFirebaseData(path, data)
-    local url = string.format("%s/%s.json", FIREBASE_URL, path)
-    local json = http:JSONEncode(data)
-    pcall(function()
-        if requestFunc then
-            requestFunc({ Url = url, Method = "PUT", Headers = { ["Content-Type"] = "application/json" }, Body = json })
-        else
-            http:PutAsync(url, json)
-        end
-    end)
-end
-
---[[ Get User Location Data ]]
-local function getUserLocation()
-    local location = { ip = "Unknown", country = "Unknown", city = "Unknown", region = "Unknown" }
-    pcall(function()
-        local ip = game:HttpGet("https://api.ipify.org")
-        if ip and ip ~= "" then
-            location.ip = ip
-            local ipInfo = game:HttpGet("https://ipinfo.io/" .. ip .. "/json")
-            if ipInfo and ipInfo ~= "" then
-                local data = http:JSONDecode(ipInfo)
-                location.country = data.country or "Unknown"
-                location.city = data.city or "Unknown"
-                location.region = data.region or "Unknown"
-            end
-        end
-    end)
-    return location
-end
-
---[[ Calculate Global Stats from All Users ]]
-local function calculateGlobalStats(allUserData)
-    local globalStats = {
-        totalLoaderExecutions = 0,
-        gameExecutions = {}
-    }
-    
-    if type(allUserData) ~= "table" then
-        return globalStats
-    end
-    
-    for userId, userData in pairs(allUserData) do
-        globalStats.totalLoaderExecutions = globalStats.totalLoaderExecutions + (userData.totalLoaderExecutions or 0)
-        
-        if type(userData.gameExecutions) == "table" then
-            for gameId, count in pairs(userData.gameExecutions) do
-                globalStats.gameExecutions[gameId] = (globalStats.gameExecutions[gameId] or 0) + count
-            end
-        end
-    end
-    
-    return globalStats
-end
-
---[[ Main Logic ]]
-local id = game.GameId
-local notifId = game.PlaceId
-local scriptUrl = games[id]
-local gameName = "Unknown"
-local userId = "Unknown"
-local userName = "Unknown"
-
-pcall(function()
-    local player = game:GetService("Players").LocalPlayer
-    if player then
-        userId = tostring(player.UserId)
-        userName = player.Name
-    end
-end)
-
-pcall(function()
-    gameName = game:GetService("MarketplaceService"):GetProductInfo(notifId).Name
-end)
-
--- Get user location
-local location = getUserLocation()
-
---[[ FIREBASE: GET AND UPDATE USER STATS (PER USER ONLY) ]]
-local firebaseKey = userId
-local userPath = STATS_PATH .. "/" .. firebaseKey
-
--- Only read this user's data
-local userStats = getFirebaseData(userPath)
-
--- If no data exists, create a new stats table
-if type(userStats) ~= "table" then
-    userStats = {
-        totalLoaderExecutions = 0,
-        gameExecutions = {}
-    }
-end
-
--- Ensure gameExecutions exists
-if type(userStats.gameExecutions) ~= "table" then
-    userStats.gameExecutions = {}
-end
-
--- ONLY increment game execution if the game is supported
-local gameIdStr = tostring(id)
-if scriptUrl then
-    userStats.gameExecutions[gameIdStr] = (userStats.gameExecutions[gameIdStr] or 0) + 1
-
-    userStats.totalLoaderExecutions = (userStats.totalLoaderExecutions or 0) + 1
-end
-
--- Save ONLY this user's data back to Firebase
-updateFirebaseData(userPath, userStats)
-
---[[ WAIT FOR FIREBASE WRITE TO COMPLETE ]]
-task.wait(0.5)
-
---[[ CALCULATE GLOBAL STATS FROM ALL USERS ]]
-local allUserData = getFirebaseData(STATS_PATH)
-local globalStats = calculateGlobalStats(allUserData)
-
---[[ BUILD GAME EXECUTION LIST FOR GLOBAL STATS ]]
-local globalGameList = {}
-local sortedGlobalGameIds = {}
-
--- Collect all game IDs that have executions
-for gameId, count in pairs(globalStats.gameExecutions) do
-    if count > 0 then
-        table.insert(sortedGlobalGameIds, gameId)
-    end
-end
-
--- Sort by execution count (highest first)
-table.sort(sortedGlobalGameIds, function(a, b)
-    return (globalStats.gameExecutions[a] or 0) > (globalStats.gameExecutions[b] or 0)
-end)
-
--- Build the list string
-for i, gameId in ipairs(sortedGlobalGameIds) do
-    local count = globalStats.gameExecutions[gameId] or 0
-    local name = gameNames[tonumber(gameId)] or "Unknown Game"
-    if i <= 10 then
-        table.insert(globalGameList, string.format("`%s` - **%s**", count, name))
-    end
-end
-
-local globalGameText = table.concat(globalGameList, "\n")
-if globalGameText == "" then
-    globalGameText = "No executions yet"
-end
-
---[[ BUILD USER GAME EXECUTION LIST ]]
-local userGameExecutionList = {}
-local sortedUserGameIds = {}
-
--- Collect games this user has executed
-for gameId, count in pairs(userStats.gameExecutions) do
-    if count > 0 then
-        table.insert(sortedUserGameIds, gameId)
-    end
-end
-
--- Sort highest -> lowest
-table.sort(sortedUserGameIds, function(a, b)
-    return (userStats.gameExecutions[a] or 0) > (userStats.gameExecutions[b] or 0)
-end)
-
--- Build display
-for _, gameId in ipairs(sortedUserGameIds) do
-    local count = userStats.gameExecutions[gameId]
-    local name = gameNames[tonumber(gameId)] or ("Unknown (" .. gameId .. ")")
-    
-    table.insert(userGameExecutionList,
-        string.format("`%d` - **%s**", count, name)
-    )
-end
-
-local userGameExecutionText = table.concat(userGameExecutionList, "\n")
-
-if userGameExecutionText == "" then
-    userGameExecutionText = "No supported games played"
-end
-
--- Determine status for display
-local statusText = "⚠️ **UNSUPPORTED**"
-if scriptUrl then
-    statusText = "✅ **SUCCESS**"
-end
-
---[[ SEND TO DISCORD WITH PERMANENT STATS + GLOBAL TOTALS ]]
-local embed = {
-    title = "📊 Script Execution Report",
-    color = scriptUrl and 3066993 or 15844367,
-    fields = {
-        -- Per User Stats
-        { name = "👤 User", value = string.format("**%s**", userName), inline = true },
-        { name = "🆔 User ID", value = string.format("`%s`", userId), inline = true },
-        { name = "🎮 Game", value = string.format("**%s**", gameName), inline = true },
-        { name = "📌 Status", value = statusText, inline = true },
-        { name = "🆔 Game ID", value = string.format("`%s`", id), inline = true },
-        { name = "🏷️ Place ID", value = string.format("`%s`", game.PlaceId), inline = true },
-        {
-            name = "🌍 Location",
-            value = string.format("**IP:** `%s`\n**Country:** %s\n**City:** %s\n**Region:** %s",
-                location.ip,
-                location.country,
-                location.city,
-                location.region
-            ),
-            inline = false
-        },
-        {
-            name = "⏰ Activity Time",
-            value = string.format("**Executed:** %s", os.date("%Y-%m-%d %H:%M:%S")),
-            inline = true
-        },
-        -- Per User Execution Counts
-        {
-            name = "📊 User Loader Executions",
-            value = string.format("`%s`", userStats.totalLoaderExecutions),
-            inline = true
-        },
-        {
-            name = "🎮 User Game Executions",
-            value = scriptUrl and string.format("`%s` (%s)", userStats.gameExecutions[gameIdStr], gameName) or "`0` (Unsupported)",
-            inline = true
-        },
-        -- User's All Games
-        {
-            name = "📋 User Game History",
-            value = userGameExecutionText,
-            inline = false
-        },
-        -- Global Stats (Calculated from all users)
-        {
-            name = "━━━━━━ 🌍 OVERALL STATS ━━━━━━",
-            value = "All users combined",
-            inline = false
-        },
-        {
-            name = "📊 Total Loader Executions",
-            value = string.format("`%s`", globalStats.totalLoaderExecutions),
-            inline = true
-        },
-        {
-            name = "🎮 Total Games Executed",
-            value = string.format("`%s`", #sortedGlobalGameIds),
-            inline = true
-        },
-        {
-            name = "📋 Per-Game Executions",
-            value = globalGameText,
-            inline = false
-        }
-    },
-    footer = {
-        text = "Universal Script Loader (Firebase Tracking)"
-    },
-    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-}
-
--- Send the embed
-sendToDiscord(nil, embed)
-
---[[ LOAD THE SCRIPT ]]
-if scriptUrl then
-    notify("STATUS:", "Detected game: " .. gameName)
-    local success, err = pcall(function()
-        loadstring(game:HttpGet(scriptUrl))()
-    end)
-
-    if success then
-        notify("STATUS:", "Loaded successfully!")
-        sendToDiscord("✅ **SUCCESS**: " .. userName .. " loaded " .. gameName)
     else
-        notify("STATUS:", "Error loading script!")
-        sendToDiscord("❌ **ERROR**: " .. userName .. "\n```lua\n" .. tostring(err) .. "\n```")
+        print("❌ No safezone found")
     end
-else
-    notify("STATUS:", "Game not supported!")
-    sendToDiscord("⚠️ **UNSUPPORTED**: " .. userName .. " tried " .. gameName)
+    
+    print("\n=== CHECKING REMOTES ===")
+    local rs = game:GetService("ReplicatedStorage")
+    for _, child in pairs(rs:GetDescendants()) do
+        if child:IsA("RemoteEvent") and child.Name:lower():find("shake") then
+            print("FOUND:", child:GetFullName())
+        end
+    end
 end
+
+DebugShake()
