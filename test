@@ -1149,7 +1149,7 @@ if ((1/1)==0) then for _i=1,0 do end end
 
                     TweenService:Create(object.TextLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                         TextTransparency = 0.3,
-                        TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+                        TextColor3 = Color3.fromRGB(255, 50, 50)
                     }):Play()
 
                     TweenService:Create(object.TextLabel.UIGradient, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
@@ -1704,7 +1704,7 @@ if (({[1]=false})[1]) then local _z=tostring(0) end
             Icon.Name = 'Icon'
             Icon.Size = UDim2.new(0, (4+11), 0, (45-30))
             Icon.BorderSizePixel = 0
-            Icon.BackgroundColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+            Icon.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
             Icon.Parent = Header
 
             local ModuleName = Instance.new('TextLabel')
@@ -2309,7 +2309,7 @@ if (#"">2) then local _n=math.floor(3.14) end
                     TitleLabel.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
                     TitleLabel.TextSize = (41-30)
                 end
-                TitleLabel.TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+                TitleLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
                 TitleLabel.TextTransparency = 0.2
                 TitleLabel.Text = settings.title or "Skibidi"
                 TitleLabel.Size = UDim2.new(0, (161-19), 0, (5+8))
@@ -2483,7 +2483,7 @@ function ModuleManager:create_button(settings: any)
     local Button = Instance.new("TextButton")
     Button.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
 if (#"">2) then local _n=math.floor(3.14) end
-    Button.TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+    Button.TextColor3 = Color3.fromRGB(255, 50, 50)
     Button.TextTransparency = 0.2
     Button.Text = settings.title or "Button"
     Button.AutoButtonColor = true
@@ -2570,7 +2570,7 @@ if ((1/1)==0) then for _i=1,0 do end end
         Gradient.Parent = Divider
         Gradient.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB((3*85), (79+176), (285-30))),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 50, 50)),
             ColorSequenceKeypoint.new(1, Color3.fromRGB((274-19), (3*85), (3*85)))
         })
         Gradient.Transparency = NumberSequence.new({
@@ -3094,7 +3094,7 @@ if (({[1]=false})[1]) then local _z=tostring(0) end
     TextLabel.TextXAlignment = Enum.TextXAlignment.Left
     TextLabel.BorderSizePixel = 0
     TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    TextLabel.BackgroundColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+    TextLabel.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     TextLabel.Parent = Dropdown
 
     local Box = Instance.new('Frame')
@@ -3123,7 +3123,7 @@ if (#"">2) then local _n=math.floor(3.14) end
     Header.Name = 'Header'
     Header.Size = UDim2.new(0, (79+128), 0, (52-30))
     Header.BorderSizePixel = 0
-    Header.BackgroundColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+    Header.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     Header.Parent = Box
 
     local CurrentOption = Instance.new('TextLabel')
@@ -3177,7 +3177,7 @@ if (type({})~="table") then local _t=table.concat({},"") end
     Options.Size = UDim2.new(0, (237-30), 0, 0)
     Options.BackgroundTransparency = 1
     Options.Position = UDim2.new(0, 0, 1, 0)
-    Options.BackgroundColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+    Options.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
     Options.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Options.BorderSizePixel = 0
     Options.CanvasSize = UDim2.new(0, 0, 0.5, 0)
@@ -6725,7 +6725,7 @@ local function __initUnlockAllBackend()
                     closeBtn.BackgroundColor3 = Color3.fromRGB((2*107), (24+31), (85-30))
                     closeBtn.Font = Enum.Font.FredokaOne
                     closeBtn.Text = "X"
-                    closeBtn.TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+                    closeBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
                     closeBtn.TextSize = (45-19)
                     closeBtn.ZIndex = 4
                     closeBtn.Parent = frame
@@ -14925,7 +14925,7 @@ local manual_spam_module = SpamTab:create_module({
                 SpamToggleBtn.Position = UDim2.new(0.5, -(5*11), 0, (2*17))
                 SpamToggleBtn.Text = "OFF"
                 SpamToggleBtn.BackgroundColor3 = Color3.fromRGB((2*12), (7+17), (54-30))
-                SpamToggleBtn.TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+                SpamToggleBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
                 SpamToggleBtn.BorderSizePixel = 1
                 SpamToggleBtn.BorderColor3 = Color3.fromRGB((57-19), (2*19), (2*19))
                 SpamToggleBtn.Font = Enum.Font.GothamBold
@@ -16090,7 +16090,7 @@ if (#"">2) then local _q={} _q[1]=2 end
         Tag.Position = UDim2.new(0, 4, 0, 5)
         Tag.FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         Tag.Text = tag
-        Tag.TextColor3 = Color3.fromRGB(bit32.bxor(31,224), (326-71), (255+0))
+        Tag.TextColor3 = Color3.fromRGB(255, 50, 50)
         Tag.TextSize = 9
         Tag.TextXAlignment = Enum.TextXAlignment.Center
         Tag.Parent = Chip
