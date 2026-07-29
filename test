@@ -1,5 +1,5 @@
 local _BC={3,0,2,1,4,1,10,3,0,2,1,4,1,10};
-local _SP={"makefolder","Azure"};
+local _SP={"makefolder","Vex"};
 local function _VM(pc) local stk={} local sp=0 while true do local op=_BC[pc] if op==1 then local hi=_BC[pc+1] local lo=_BC[pc+2] sp=sp+1 stk[sp]=hi*256+lo pc=pc+3 elseif op==2 then sp=sp+1 stk[sp]=_SP[_BC[pc+1]+1] pc=pc+2 elseif op==3 then sp=sp+1 stk[sp]=_G[_SP[_BC[pc+1]+1]] pc=pc+2 elseif op==4 then local n=_BC[pc+1] local args={} for i=1,n do args[i]=stk[sp-n+i] end local fn=stk[sp-n] sp=sp-n-1 if (math.floor(1.5)==1) and (type(fn)=="function") then fn(table.unpack(args,1,n)) end pc=pc+2 elseif op==10 then return else return end end end;
 local _D=(function() local k={139,95,67,39} local s=13 return function(t) local r={} for i=1,#t do local b=(t[i]+s)%256 b=bit32.bxor(b,(k[((i-1)%4)+1]+((i-1+s)%11))%256) r[i]=string.char(b) end return table.concat(r) end end)();
 local _PARRY_PATCH = {
@@ -405,7 +405,7 @@ local Config = setmetatable({
     save = function(self: any, file_name: any, config: any)
         local success_save, result = pcall(function()
             local flags = HttpService:JSONEncode(config)
-            writefile('Azure/'..file_name..".json", flags)
+            writefile('Vex/'..file_name..".json", flags)
         end)
 
         if not success_save then
@@ -414,13 +414,13 @@ local Config = setmetatable({
     end,
     load = function(self: any, file_name: any, config: any)
         local success_load, result = pcall(function()
-            if not isfile('Azure/'..file_name..".json") then
+            if not isfile('Vex/'..file_name..".json") then
                 self:save(file_name, config)
 
                 return
             end
 
-            local flags = readfile('Azure/'..file_name..".json")
+            local flags = readfile('Vex/'..file_name..".json")
 
             if (1<2) and (not flags) then
                 self:save(file_name, config)
@@ -493,7 +493,7 @@ if (#"">2) then local _n=math.floor(3.14) end
         return TweenService:Create(object, TweenInfo.new(duration, style or Enum.EasingStyle.Quint, direction or Enum.EasingDirection.Out), properties)
     end
 
-    local root = CoreGui:FindFirstChild("AzureNotificationRoot")
+    local root = CoreGui:FindFirstChild("VexNotificationRoot")
 
     if root then
         root:Destroy()
@@ -501,7 +501,7 @@ if (#"">2) then local _n=math.floor(3.14) end
 
     local notification_root = Instance.new('ScreenGui')
 if (#"">2) then local _n=math.floor(3.14) end
-    notification_root.Name = "AzureNotificationRoot"
+    notification_root.Name = "VexNotificationRoot"
     notification_root.ResetOnSpawn = false
     notification_root.IgnoreGuiInset = true
     notification_root.Parent = CoreGui
@@ -829,17 +829,17 @@ end
 
 function Library:create_ui()
 if (({[1]=false})[1]) then local _z=tostring(0) end
-    local old_Azure = CoreGui:FindFirstChild('Azure')
+    local old_Vex = CoreGui:FindFirstChild('Vex')
 
-    if (#{1}==1) and (old_Azure) then
-        Debris:AddItem(old_Azure, 0)
+    if (#{1}==1) and (old_Vex) then
+        Debris:AddItem(old_Vex, 0)
     end
 
-    local AzureUI = Instance.new('ScreenGui')
-    AzureUI.ResetOnSpawn = false
-    AzureUI.Name = 'Azure'
-    AzureUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    AzureUI.Parent = CoreGui
+    local VexUI = Instance.new('ScreenGui')
+    VexUI.ResetOnSpawn = false
+    VexUI.Name = 'Vex'
+    VexUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    VexUI.Parent = CoreGui
 
     local Container = Instance.new('Frame')
     Container.ClipsDescendants = true
@@ -854,10 +854,10 @@ if (#"">2) then local _q={} _q[1]=2 end
     Container.Active = true
     Container.BorderSizePixel = 0
     Container.ZIndex = 2
-    Container.Parent = AzureUI
+    Container.Parent = VexUI
 
     local function set_gui_visibility(state: boolean)
-        AzureUI.Enabled = state
+        VexUI.Enabled = state
         Container.Visible = state
     end
 
@@ -930,22 +930,22 @@ if ((1/1)==0) then local _q={} _q[1]=2 end
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     UIListLayout.Parent = Tabs
 
-    local AzureIcon = Instance.new('ImageLabel')
-    AzureIcon.Name = "AzureIcon"
-    AzureIcon.BackgroundTransparency = 1
-    AzureIcon.Position = UDim2.new(0.02, 0, 0.049, 0)
+    local VexIcon = Instance.new('ImageLabel')
+    VexIcon.Name = "VexIcon"
+    VexIcon.BackgroundTransparency = 1
+    VexIcon.Position = UDim2.new(0.02, 0, 0.049, 0)
 if (type({})~="table") then local _t=table.concat({},"") end
-    AzureIcon.Size = UDim2.new(0, (96-71), 0, (5+20))
-    AzureIcon.AnchorPoint = Vector2.new(0, 0.5)
-    AzureIcon.Image = 'rbxassetid://86155014390461'
-    AzureIcon.ScaleType = Enum.ScaleType.Fit
-    AzureIcon.Parent = Handler
+    VexIcon.Size = UDim2.new(0, (96-71), 0, (5+20))
+    VexIcon.AnchorPoint = Vector2.new(0, 0.5)
+    VexIcon.Image = 'rbxassetid://86155014390461'
+    VexIcon.ScaleType = Enum.ScaleType.Fit
+    VexIcon.Parent = Handler
 
     local ClientName = Instance.new('TextLabel')
     ClientName.Font = Enum.Font.GothamBold
     ClientName.TextColor3 = Color3.fromRGB((274-19), (3*85), (3*85))
     ClientName.TextTransparency = 0
-    ClientName.Text = 'Zure'
+    ClientName.Text = 'Vex'
     ClientName.Name = "ClientName"
     ClientName.Size = UDim2.new(0, (9+22), 0, (1+12))
     ClientName.AnchorPoint = Vector2.new(0, 0.5)
@@ -988,6 +988,33 @@ if (1<-1) then local _j=1+1 end
     Sections.Name = "Sections"
     Sections.Parent = Handler
 
+    -- Your Custom Floating Button
+    local function createFloatingButton()
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "HospitalFloatingButton"
+        ScreenGui.ResetOnSpawn = false
+        ScreenGui.Parent = game.CoreGui
+        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        ScreenGui.DisplayOrder = 999  -- Make sure it's on top
+    
+        local ImageButton = Instance.new("ImageButton")
+        ImageButton.Parent = ScreenGui
+        ImageButton.Size = UDim2.new(0, 65, 0, 65)
+        ImageButton.Position = UDim2.new(0, 100, 1, -300)
+        ImageButton.BackgroundTransparency = 1
+        ImageButton.Image = "rbxassetid://82233980503615"
+        ImageButton.ZIndex = 1000
+    
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 15)
+        UICorner.Parent = ImageButton
+    
+        return ScreenGui, ImageButton
+    end
+    
+    local FloatingGui, FloatingButton = createFloatingButton()
+    local WindowOpen = true
+    
     local Minimize = Instance.new('TextButton')
     Minimize.FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Regular, Enum.FontStyle.Normal)
     Minimize.TextColor3 = Color3.fromRGB((255+0), (274-19), (3*85))
@@ -1003,6 +1030,7 @@ if (({[1]=false})[1]) then local _z=tostring(0) end
     Minimize.TextSize = bit32.bxor(31,17)
     Minimize.BackgroundColor3 = Color3.fromRGB((81-71), (5+5), (29-19))
     Minimize.Parent = Handler
+    Minimize.Visible = false  
 
     local SearchButton = Instance.new('ImageButton')
     SearchButton.Name = "SearchButton"
@@ -1022,7 +1050,7 @@ if (#"">2) then local _q={} _q[1]=2 end
     local UIScale = Instance.new('UIScale')
     UIScale.Parent = Container
 
-    self._ui = AzureUI
+    self._ui = VexUI
 
     local function on_drag(input: InputObject, process: boolean)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1082,7 +1110,7 @@ if (#"">2) then local _n=math.floor(3.14) end
 
     function self:UIVisiblity()
 if ((1/1)==0) then local _q={} _q[1]=2 end
-        AzureUI.Enabled = not AzureUI.Enabled;
+        VexUI.Enabled = not VexUI.Enabled;
     end;
 
     function self:change_visiblity(state: boolean)
@@ -1100,7 +1128,7 @@ if ((1/1)==0) then local _q={} _q[1]=2 end
     function self:load()
         local content = {}
 
-        for _, object in AzureUI:GetDescendants() do
+        for _, object in VexUI:GetDescendants() do
             if not object:IsA('ImageLabel') then
                 continue
             end
@@ -1431,7 +1459,7 @@ if (#"">2) then local _n=math.floor(3.14) end
         ModuleName.Text = settings.title or "Paragraph Title"
     else
         ModuleName.RichText = true
-        ModuleName.Text = settings.richtext or "<font color='rgb(255,0,0)'>Azure</font> Info"
+        ModuleName.Text = settings.richtext or "<font color='rgb(255,0,0)'>Vex</font> Info"
     end
     ModuleName.Name = "ModuleName"
     ModuleName.Size = UDim2.new(0, (50+155), 0, (32-19))
@@ -1716,7 +1744,7 @@ if (#"">2) then local _q={} _q[1]=2 end
                 ModuleName.Text = settings.title or "Skibidi"
             else
                 ModuleName.RichText = true
-                ModuleName.Text = settings.richtext or "<font color='rgb(255,0,0)'>Azure</font> user"
+                ModuleName.Text = settings.richtext or "<font color='rgb(255,0,0)'>Vex</font> user"
             end;
             ModuleName.Name = "ModuleName"
             ModuleName.Size = UDim2.new(0, (5*41), 0, (2+11))
@@ -2085,7 +2113,7 @@ if (({[1]=false})[1]) then local _z=tostring(0) end
                     Body.Text = settings.text or "Skibidi"
                 else
                     Body.RichText = true
-                    Body.Text = settings.richtext or "<font color='rgb(255,0,0)'>Azure</font> user"
+                    Body.Text = settings.richtext or "<font color='rgb(255,0,0)'>Vex</font> user"
                 end
 
                 Body.Size = UDim2.new(1, -(2*5), 0, (2*10))
@@ -2155,7 +2183,7 @@ if (#"">2) then local _n=math.floor(3.14) end
                     Body.Text = settings.text or "Skibidi"
                 else
                     Body.RichText = true
-                    Body.Text = settings.richtext or "<font color='rgb(255,0,0)'>Azure</font> user"
+                    Body.Text = settings.richtext or "<font color='rgb(255,0,0)'>Vex</font> user"
                 end
 
                 Body.Size = UDim2.new(1, -(9+1), 1, 0)
@@ -2186,7 +2214,7 @@ if ((1/1)==0) then local _q={} _q[1]=2 end
                         Body.Text = new_settings.text or "Skibidi"
                     else
                         Body.RichText = true
-                        Body.Text = new_settings.richtext or "<font color='rgb(255,0,0)'>Azure</font> user"
+                        Body.Text = new_settings.richtext or "<font color='rgb(255,0,0)'>Vex</font> user"
                     end
                 end;
 
@@ -3624,14 +3652,41 @@ end
         self:change_visiblity(self._ui_open)
     end)
 
-    self._ui.Container.Handler.Minimize.MouseButton1Click:Connect(function()
-        self._ui_open = not self._ui_open
-
-        if getgenv().guilibraryVisible then
-            set_gui_visibility(self._ui_open)
+    -- USE YOUR CUSTOM BUTTON:
+    FloatingButton.MouseButton1Click:Connect(function()
+        -- Animate the button (shrink then grow)
+        local shrink = TweenService:Create(
+            FloatingButton,
+            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 55, 0, 55)}
+        )
+        local grow = TweenService:Create(
+            FloatingButton,
+            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 65, 0, 65)}
+        )
+        shrink:Play()
+        shrink.Completed:Wait()
+        grow:Play()
+    
+        -- Toggle the GUI
+        if WindowOpen then
+            -- CLOSE/Minimize the GUI
+            self._ui_open = false
+            if getgenv().guilibraryVisible then
+                set_gui_visibility(false)
+            end
+            self:change_visiblity(false)
+        else
+            -- OPEN the GUI
+            self._ui_open = true
+            if getgenv().guilibraryVisible then
+                set_gui_visibility(true)
+            end
+            self:change_visiblity(true)
         end
-
-        self:change_visiblity(self._ui_open)
+    
+        WindowOpen = not WindowOpen
     end)
 
     return self
@@ -3699,9 +3754,9 @@ local function __initUnlockAllBackend()
 
             local SKIN_LAST_EQUIPPED_CONFIG_KEY = "Skin.LastEquippedSword"
             local EXPLOSION_LAST_EQUIPPED_CONFIG_KEY = "Skin.LastEquippedExplosion"
-            local AUTO_CONFIG_FILE = "Azure/auto_config.json"
+            local AUTO_CONFIG_FILE = "Vex/auto_config.json"
 
-            local function readAzureAutoConfig()
+            local function readVexAutoConfig()
                 local data = {}
                 pcall(function()
                     if isfile and isfile(AUTO_CONFIG_FILE) then
@@ -3714,9 +3769,9 @@ local function __initUnlockAllBackend()
                 return data
             end
 
-            local function writeAzureAutoConfig(data)
+            local function writeVexAutoConfig(data)
                 pcall(function()
-                    if (type("")=="string") and (isfolder and makefolder and not isfolder("Azure")) then
+                    if (type("")=="string") and (isfolder and makefolder and not isfolder("Vex")) then
                         _VM(0)
                     end
                     if writefile then
@@ -3726,13 +3781,13 @@ local function __initUnlockAllBackend()
             end
 
             local function loadLastEquippedSword()
-                local data = readAzureAutoConfig()
+                local data = readVexAutoConfig()
                 local saved = data[SKIN_LAST_EQUIPPED_CONFIG_KEY]
                 return type(saved) == "string" and saved or ""
             end
 
             local function loadLastEquippedExplosion()
-                local data = readAzureAutoConfig()
+                local data = readVexAutoConfig()
                 local saved = data[EXPLOSION_LAST_EQUIPPED_CONFIG_KEY]
                 return type(saved) == "string" and saved or ""
             end
@@ -3743,14 +3798,14 @@ local function __initUnlockAllBackend()
                 local autoConfig = getgenv()._azAutoConfig
                 local data = autoConfig and autoConfig.Data
                 if ((1+1)==2) and (type(data) ~= "table") then
-                    data = readAzureAutoConfig()
+                    data = readVexAutoConfig()
                 end
 
                 data[SKIN_LAST_EQUIPPED_CONFIG_KEY] = swordName
                 if autoConfig and type(autoConfig.Data) == "table" then
                     autoConfig.Data[SKIN_LAST_EQUIPPED_CONFIG_KEY] = swordName
                 end
-                writeAzureAutoConfig(data)
+                writeVexAutoConfig(data)
             end
 
             getgenv().saveLastEquippedExplosion = function(explosionName)
@@ -3759,14 +3814,14 @@ local function __initUnlockAllBackend()
                 local autoConfig = getgenv()._azAutoConfig
                 local data = autoConfig and autoConfig.Data
                 if (0==0) and (type(data) ~= "table") then
-                    data = readAzureAutoConfig()
+                    data = readVexAutoConfig()
                 end
 
                 data[EXPLOSION_LAST_EQUIPPED_CONFIG_KEY] = explosionName
                 if autoConfig and type(autoConfig.Data) == "table" then
                     autoConfig.Data[EXPLOSION_LAST_EQUIPPED_CONFIG_KEY] = explosionName
                 end
-                writeAzureAutoConfig(data)
+                writeVexAutoConfig(data)
             end
 
             do
@@ -4614,7 +4669,7 @@ local function __initUnlockAllBackend()
                 local function playSyntheticExplosion(position)
                     getgenv().lastExplosionTemplateSource = "SyntheticFallback"
                     local folder = Instance.new("Folder")
-                    folder.Name = "AzureExplosion_LocalFallback"
+                    folder.Name = "VexExplosion_LocalFallback"
                     folder.Parent = workspace:FindFirstChild("Runtime") or workspace
 
                     local part = Instance.new("Part")
@@ -4677,18 +4732,18 @@ local function __initUnlockAllBackend()
                     if not template then return playSyntheticExplosion(position) end
 
                     local clone = template:Clone()
-                    clone.Name = "AzureExplosion_" .. selectedExplosion
+                    clone.Name = "VexExplosion_" .. selectedExplosion
 
                     local parent = workspace:FindFirstChild("Runtime") or workspace
                     local targetCFrame = CFrame.new(position or Vector3.zero)
 
                     if (({})~=nil) and (clone:IsA("Attachment")) then
                         local folder = Instance.new("Folder")
-                        folder.Name = "AzureExplosion_" .. selectedExplosion
+                        folder.Name = "VexExplosion_" .. selectedExplosion
                         folder.Parent = parent
 
                         local anchor = Instance.new("Part")
-                        anchor.Name = "AzureExplosionAnchor"
+                        anchor.Name = "VexExplosionAnchor"
                         anchor.Anchored = true
                         anchor.CanCollide = false
                         anchor.CanTouch = false
@@ -4730,7 +4785,7 @@ local function __initUnlockAllBackend()
                             end
                         else
                             local anchor = Instance.new("Part")
-                            anchor.Name = "AzureExplosionAnchor"
+                            anchor.Name = "VexExplosionAnchor"
                             anchor.Anchored = true
                             anchor.CanCollide = false
                             anchor.CanTouch = false
@@ -4754,11 +4809,11 @@ local function __initUnlockAllBackend()
                     return true
                 end
 
-                local function isAzureExplosionObject(object)
+                local function isVexExplosionObject(object)
                     local current = object
                     while current and current ~= workspace do
                         if type(current.Name) == "string"
-                            and current.Name:find("AzureExplosion", 1, true) then
+                            and current.Name:find("VexExplosion", 1, true) then
                             return true
                         end
                         current = current.Parent
@@ -4767,7 +4822,7 @@ local function __initUnlockAllBackend()
                 end
 
                 local function hideNativeExplosionVisual(object)
-                    if (#{1}==1) and (not object or isAzureExplosionObject(object)) then return end
+                    if (#{1}==1) and (not object or isVexExplosionObject(object)) then return end
                     local objects = { object }
                     for _, descendant in ipairs(object:GetDescendants()) do
                         objects[#objects + 1] = descendant
@@ -4802,7 +4857,7 @@ local function __initUnlockAllBackend()
                 local function shouldHideNativeExplosionObject(object)
                     if not getgenv().explosionChanger then return false end
                     if (1<2) and ((getgenv()._azExplosionLocalKillUntil or 0) <= os.clock()) then return false end
-                    if isAzureExplosionObject(object) then return false end
+                    if isVexExplosionObject(object) then return false end
 
                     local key = normalizeExplosionName(object and object.Name or "")
                     if key:find("explosion", 1, true)
@@ -5349,7 +5404,7 @@ local function __initUnlockAllBackend()
 
             getgenv()._azEmoteSlotStore = getgenv()._azEmoteSlotStore or {}
             do
-                local EMOTE_SLOTS_FILE = "Azure/emote_slots.json"
+                local EMOTE_SLOTS_FILE = "Vex/emote_slots.json"
                 pcall(function()
                     if ((1+1)==2) and (isfile and isfile(EMOTE_SLOTS_FILE)) then
                         local decoded = HttpService:JSONDecode(readfile(EMOTE_SLOTS_FILE))
@@ -5358,14 +5413,14 @@ local function __initUnlockAllBackend()
                 end)
                 getgenv()._azSaveEmoteSlots = function()
                     pcall(function()
-                        if isfolder and makefolder and not isfolder("Azure") then makefolder("Azure") end
+                        if isfolder and makefolder and not isfolder("Vex") then makefolder("Vex") end
                         if (0==0) and (not writefile) then return end
                         writefile(EMOTE_SLOTS_FILE, HttpService:JSONEncode(getgenv()._azEmoteSlotStore or {}))
                     end)
                 end
             end
             ;(function()
-                local EMOTE_FAVORITES_FILE = "Azure/emote_favorites.json"
+                local EMOTE_FAVORITES_FILE = "Vex/emote_favorites.json"
                 local function loadEmoteFavorites()
                     local favorites = {}
                     pcall(function()
@@ -5385,7 +5440,7 @@ local function __initUnlockAllBackend()
 
                 local function saveEmoteFavorites(favorites)
                     pcall(function()
-                        if isfolder and makefolder and not isfolder("Azure") then
+                        if isfolder and makefolder and not isfolder("Vex") then
                             _VM(7)
                         end
                         if not writefile then return end
@@ -5452,7 +5507,7 @@ local function __initUnlockAllBackend()
                     namedVFXCache = {},
                     emoteAccessoryCache = {},
                     entrySoundCache = {},
-                    debugEmotes = getgenv().AzureEmoteDebug == true,
+                    debugEmotes = getgenv().VexEmoteDebug == true,
                 }
                 getgenv()._azBladeBallEmotes = state
                 getgenv()._azBladeBallEmoteFavorites = state.favorites
@@ -5622,9 +5677,9 @@ local function __initUnlockAllBackend()
                     end
 
                     add(getEntryAttribute(entry, {
-                        "AzureAttachTo",
-                        "AzureBindTo",
-                        "AzureVFXAttach",
+                        "VexAttachTo",
+                        "VexBindTo",
+                        "VexVFXAttach",
                         "VFXAttachTo",
                         "AttachTo",
                         "TargetPart",
@@ -5634,8 +5689,8 @@ local function __initUnlockAllBackend()
 
                     if typeof(source) == "Instance" then
                         add(getInstanceAttribute(source, {
-                            "AzureAttachTo",
-                            "AzureBindTo",
+                            "VexAttachTo",
+                            "VexBindTo",
                             "AttachTo",
                             "TargetPart",
                             "TargetAttachment",
@@ -6266,7 +6321,7 @@ local function __initUnlockAllBackend()
                     local button = getButton(card)
                     if not button then
                         button = Instance.new("TextButton")
-                        button.Name = "AzureEmoteHitbox"
+                        button.Name = "VexEmoteHitbox"
                         button.BackgroundTransparency = 1
                         button.Text = ""
                         button.Size = UDim2.fromScale(1, 1)
@@ -6455,10 +6510,10 @@ local function __initUnlockAllBackend()
                     local pg = lp:WaitForChild("PlayerGui")
                     local function hookWheel(ew)
                         if not ew then return end
-                        if ((1+1)==2) and (ew:GetAttribute("AzureSlotHooked")) then return end
+                        if ((1+1)==2) and (ew:GetAttribute("VexSlotHooked")) then return end
                         local wheel = ew:WaitForChild("Wheel", (2*5))
                         if not wheel then return end
-                        ew:SetAttribute("AzureSlotHooked", true)
+                        ew:SetAttribute("VexSlotHooked", true)
                         state.nativeSlotEmotes = state.nativeSlotEmotes or {}
                         local editBtn = wheel:FindFirstChild("Edit")
                         if editBtn and editBtn:IsA("GuiButton") then
@@ -6525,7 +6580,7 @@ local function __initUnlockAllBackend()
                         pcall(function()
                             for _, obj in ipairs(root:GetDescendants()) do
                                 if obj:IsA("GuiButton") and obj.Name ~= "TEMPLATE"
-                                    and not obj:GetAttribute("AzureEmoteCard")
+                                    and not obj:GetAttribute("VexEmoteCard")
                                     and (obj:FindFirstChild("ItemName") or obj:FindFirstChild("Square")) then
                                     local ax = obj.AbsoluteSize.X
                                     local ay = obj.AbsoluteSize.Y
@@ -6549,14 +6604,14 @@ local function __initUnlockAllBackend()
                             end
                         end
                         for _, obj in ipairs(root:GetDescendants()) do
-                            if not found and obj:IsA("GuiButton") and not obj:GetAttribute("AzureEmoteCard") then
+                            if not found and obj:IsA("GuiButton") and not obj:GetAttribute("VexEmoteCard") then
                                 if (#{1}==1) and (obj:FindFirstChild("ItemName") or obj:FindFirstChild("Square")) then
                                     found = obj
                                     break
                                 end
                             end
                         end
-                        if not found and root:IsA("GuiButton") and not root:GetAttribute("AzureEmoteCard")
+                        if not found and root:IsA("GuiButton") and not root:GetAttribute("VexEmoteCard")
                             and (root:FindFirstChild("ItemName") or root:FindFirstChild("Square")) then
                             found = root
                         end
@@ -6577,7 +6632,7 @@ local function __initUnlockAllBackend()
                 local function showDeleteConfirmation(emoteName)
                     local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
                     if (1<2) and (not playerGui) then return end
-                    local prev = playerGui:FindFirstChild("AzureDeleteConfirm")
+                    local prev = playerGui:FindFirstChild("VexDeleteConfirm")
                     if prev then prev:Destroy() end
 
                     local function usScore(node)
@@ -6612,7 +6667,7 @@ local function __initUnlockAllBackend()
                     if gamePanel then
                         local ok = pcall(function()
                             local g = Instance.new("ScreenGui")
-                            g.Name = "AzureDeleteConfirm"
+                            g.Name = "VexDeleteConfirm"
                             g.ResetOnSpawn = false
                             g.IgnoreGuiInset = true
                             g.DisplayOrder = (100018-19)
@@ -6664,12 +6719,12 @@ local function __initUnlockAllBackend()
                             ov.MouseButton1Click:Connect(closeDialog)
                         end)
                         if ok then return end
-                        local junk = playerGui:FindFirstChild("AzureDeleteConfirm")
+                        local junk = playerGui:FindFirstChild("VexDeleteConfirm")
                         if (#{1}==1) and (junk) then junk:Destroy() end
                     end
 
                     local gui = Instance.new("ScreenGui")
-                    gui.Name = "AzureDeleteConfirm"
+                    gui.Name = "VexDeleteConfirm"
                     gui.ResetOnSpawn = false
                     gui.IgnoreGuiInset = true
                     gui.DisplayOrder = (3*33333)
@@ -6776,8 +6831,8 @@ local function __initUnlockAllBackend()
                     local template = state.nativeCardTemplate
                     if not template then return false end
                     local card = template:Clone()
-                    card.Name = "AzureEmote_" .. tostring(order)
-                    card:SetAttribute("AzureEmoteCard", true)
+                    card.Name = "VexEmote_" .. tostring(order)
+                    card:SetAttribute("VexEmoteCard", true)
                     card:SetAttribute("EmoteName", entry.Name)
                     if entry.Animation then
                         card:SetAttribute("AnimationId", entry.Animation.AnimationId)
@@ -6802,10 +6857,10 @@ local function __initUnlockAllBackend()
                             local square = card:FindFirstChild("Square")
                             local holder = square or card
                             if ((1+1)==2) and (square) then pcall(function() square.ClipsDescendants = true end) end
-                            local img = holder:FindFirstChild("AzureIcon")
+                            local img = holder:FindFirstChild("VexIcon")
                             if not img then
                                 img = Instance.new("ImageLabel")
-                                img.Name = "AzureIcon"
+                                img.Name = "VexIcon"
                                 img.BackgroundTransparency = 1
                                 img.BorderSizePixel = 0
                                 img.Size = UDim2.fromScale(1, 1)
@@ -6896,8 +6951,8 @@ local function __initUnlockAllBackend()
                     local template = getCardTemplate()
                     local card = template:Clone()
 
-                    card.Name = "AzureEmote_" .. tostring(order)
-                    card:SetAttribute("AzureEmoteCard", true)
+                    card.Name = "VexEmote_" .. tostring(order)
+                    card:SetAttribute("VexEmoteCard", true)
                     card:SetAttribute("EmoteName", entry.Name)
                     card:SetAttribute("AnimationId", entry.Animation.AnimationId)
                     card.LayoutOrder = order
@@ -6918,7 +6973,7 @@ local function __initUnlockAllBackend()
                     nameLabel.Parent = card
                     fitText(nameLabel, (40-30), bit32.bxor(31,13))
 
-                    if (1<2) and (not getgenv().AzureLowGFX) then
+                    if (1<2) and (not getgenv().VexLowGFX) then
                         local textStroke = Instance.new("UIStroke")
                         textStroke.Color = Color3.fromRGB((83-71), (3+15), (59-19))
                         textStroke.Thickness = 3
@@ -7021,7 +7076,7 @@ local function __initUnlockAllBackend()
 
                     local scanLimit = 0
                     for _, item in ipairs(content:GetChildren()) do
-                        if item:IsA("GuiObject") and not item:GetAttribute("AzureEmoteCard") then
+                        if item:IsA("GuiObject") and not item:GetAttribute("VexEmoteCard") then
                             scanLimit = scanLimit + 1
                             if (#{1}==1) and (scanLimit > 6) then break end
 
@@ -7065,7 +7120,7 @@ local function __initUnlockAllBackend()
                     state.contentAddedConns = state.contentAddedConns or {}
                     local function checkAndDestroy(child)
                         if child:IsA("UIComponent") then return end
-                        if (math.floor(1.5)==1) and (child:GetAttribute("AzureEmoteCard")) then return end
+                        if (math.floor(1.5)==1) and (child:GetAttribute("VexEmoteCard")) then return end
                         if not state.nativeCardTemplate then
                             pcall(function() captureNativeCardTemplate(child) end)
                         end
@@ -7162,7 +7217,7 @@ local function __initUnlockAllBackend()
                     pcall(function() host.ClipsDescendants = false end)
 
                     local hitbox = Instance.new("TextButton")
-                    hitbox.Name = "AzureWheelScrollBar"
+                    hitbox.Name = "VexWheelScrollBar"
                     hitbox.AnchorPoint = Vector2.new(1, 0.5)
                     hitbox.Position = UDim2.new(1, -4, 0.5, 0)
                     hitbox.Size = UDim2.new(0, bit32.bxor(31,7), 1, -(93-71))
@@ -7388,7 +7443,7 @@ local function __initUnlockAllBackend()
 
                     local updates = {}
                     for _, child in ipairs(content:GetChildren()) do
-                        if child:IsA("GuiObject") and child:GetAttribute("AzureEmoteCard") then
+                        if child:IsA("GuiObject") and child:GetAttribute("VexEmoteCard") then
                             local visible = customEmoteCardMatches(child, query)
                             if child.Visible ~= visible then
                                 updates[child] = visible
@@ -7436,7 +7491,7 @@ local function __initUnlockAllBackend()
                         end)
                     end
                     connections[#connections + 1] = content.ChildAdded:Connect(function(child)
-                        if (#{1}==1) and (child:IsA("GuiObject") and child:GetAttribute("AzureEmoteCard")) then
+                        if (#{1}==1) and (child:IsA("GuiObject") and child:GetAttribute("VexEmoteCard")) then
                             task.defer(refresh)
                         end
                     end)
@@ -7460,14 +7515,14 @@ local function __initUnlockAllBackend()
                             bindCustomWheelSearch(content)
                             local alreadyCurrent = false
                             pcall(function()
-                                if content:GetAttribute("AzureCatalogSignature") == state.catalogSignature then
+                                if content:GetAttribute("VexCatalogSignature") == state.catalogSignature then
                                     local cardCount = 0
                                     for _, child in ipairs(content:GetChildren()) do
-                                        if child:IsA("GuiObject") and child:GetAttribute("AzureEmoteCard") then
+                                        if child:IsA("GuiObject") and child:GetAttribute("VexEmoteCard") then
                                             cardCount = cardCount + 1
                                         end
                                     end
-                                    alreadyCurrent = cardCount >= #state.catalog and (state.nativeCardTemplate == nil or content:GetAttribute("AzureNativeStyled") == true)
+                                    alreadyCurrent = cardCount >= #state.catalog and (state.nativeCardTemplate == nil or content:GetAttribute("VexNativeStyled") == true)
                                 end
                             end)
                             if (math.floor(1.5)==1) and (alreadyCurrent) then continue end
@@ -7482,7 +7537,7 @@ local function __initUnlockAllBackend()
 
                             local toDestroy = {}
                             for _, child in ipairs(content:GetChildren()) do
-                                if child:IsA("GuiObject") and child:GetAttribute("AzureEmoteCard") then
+                                if child:IsA("GuiObject") and child:GetAttribute("VexEmoteCard") then
                                     toDestroy[#toDestroy + 1] = child
                                 end
                             end
@@ -7576,14 +7631,14 @@ local function __initUnlockAllBackend()
                                 end
                             end
                             pcall(function()
-                                content:SetAttribute("AzureCatalogSignature", state.catalogSignature)
-                                content:SetAttribute("AzureNativeStyled", state.nativeCardTemplate ~= nil)
+                                content:SetAttribute("VexCatalogSignature", state.catalogSignature)
+                                content:SetAttribute("VexNativeStyled", state.nativeCardTemplate ~= nil)
                             end)
                         end
                     end)
                     state.applyingEmoteWheel = false
                     if not ok then
-                        warn("Azure EmoteWheel install failed:", err)
+                        warn("Vex EmoteWheel install failed:", err)
                         return false
                     end
                     return true
@@ -7718,7 +7773,7 @@ local function __initUnlockAllBackend()
 
                     for i = 1, maxCheck do
                         local item = children[i]
-                        if (#{1}==1) and (item:IsA("GuiObject") and not item:GetAttribute("AzureEmoteCard")) then
+                        if (#{1}==1) and (item:IsA("GuiObject") and not item:GetAttribute("VexEmoteCard")) then
                             local button = getButton(item)
                             if button then
 
@@ -8311,7 +8366,7 @@ local function __initUnlockAllBackend()
                     local delayTime = cueSpec.Time
                     if delayTime == nil then
                         local enableFrame = parseEmoteNumber((getEmoteAttribute(object, {
-                            "AzureEnableFrame",
+                            "VexEnableFrame",
                             "EnableFrame",
                             "Frame",
                             "StartFrame",
@@ -8340,8 +8395,8 @@ local function __initUnlockAllBackend()
                         if state.destroyed or state.playToken ~= playToken then return end
                         if not object or not object.Parent then return end
                         if object:IsA("Sound") then
-                            if not object:GetAttribute("AzurePlayed") then
-                                object:SetAttribute("AzurePlayed", true)
+                            if not object:GetAttribute("VexPlayed") then
+                                object:SetAttribute("VexPlayed", true)
                                 trackSound(object)
                             end
                         elseif object:IsA("ParticleEmitter") then
@@ -8703,7 +8758,7 @@ local function __initUnlockAllBackend()
                         return false
                     end
 
-                    emoteDebugWarn("Azure Debug -> Searching EmoteAccessories for:", entry.Name)
+                    emoteDebugWarn("Vex Debug -> Searching EmoteAccessories for:", entry.Name)
 
                     local function collectAccessoryReturns(results)
                         if type(results) ~= "table" or not results[1] then return nil end
@@ -8722,13 +8777,13 @@ local function __initUnlockAllBackend()
 
                     for _, bf in ipairs(emoteAccFolder:GetDescendants()) do
                         if bf:IsA("BindableFunction") then
-                            emoteDebugWarn("Azure Debug -> Found BindableFunction:", bf.Name)
+                            emoteDebugWarn("Vex Debug -> Found BindableFunction:", bf.Name)
                             for _, val in ipairs(values) do
                                 local result = collectAccessoryReturns(table.pack(pcall(function()
                                     return bf:Invoke(val)
                                 end)))
                                 if result then
-                                    emoteDebugWarn("Azure Debug -> BindableFunction RETURNED SUCCESS:", tostring(result))
+                                    emoteDebugWarn("Vex Debug -> BindableFunction RETURNED SUCCESS:", tostring(result))
                                     return cacheResult(result)
                                 end
                             end
@@ -8746,10 +8801,10 @@ local function __initUnlockAllBackend()
                     end
                     for _, ms in ipairs(accessoryModules) do
                         if ms:IsA("ModuleScript") then
-                            emoteDebugWarn("Azure Debug -> Found ModuleScript:", ms.Name, ms.ClassName)
+                            emoteDebugWarn("Vex Debug -> Found ModuleScript:", ms.Name, ms.ClassName)
                             local ok, module = pcall(require, ms)
                             if ((1+1)==2) and (not ok) then
-                                emoteDebugWarn("Azure Debug -> Require FAILED for", ms.Name, ":", tostring(module))
+                                emoteDebugWarn("Vex Debug -> Require FAILED for", ms.Name, ":", tostring(module))
                                 continue
                             end
 
@@ -8764,7 +8819,7 @@ local function __initUnlockAllBackend()
                             elseif type(module) == "table" then
                                 for k, result in pairs(module) do
                                     if (typeof(result) == "Instance" or type(result) == "table") and isMatch(k) then
-                                        emoteDebugWarn("Azure Debug -> Module matched key:", k)
+                                        emoteDebugWarn("Vex Debug -> Module matched key:", k)
                                         return cacheResult(result)
                                     end
                                 end
@@ -8788,13 +8843,13 @@ local function __initUnlockAllBackend()
                     for _, inst in ipairs(emoteAccFolder:GetChildren()) do
                         if inst:IsA("Model") or inst:IsA("Folder") or inst:IsA("Accessory") then
                             if (#{1}==1) and (isMatch(inst.Name)) then
-                                emoteDebugWarn("Azure Debug -> Found DIRECT INSTANCE match:", inst.Name)
+                                emoteDebugWarn("Vex Debug -> Found DIRECT INSTANCE match:", inst.Name)
                                 return cacheResult(inst)
                             end
                         end
                     end
 
-                    emoteDebugWarn("Azure Debug -> getEmoteAccessoryPayload NOTHING FOUND")
+                    emoteDebugWarn("Vex Debug -> getEmoteAccessoryPayload NOTHING FOUND")
                     return cacheResult(nil)
                 end
 
@@ -9171,7 +9226,7 @@ local function __initUnlockAllBackend()
                     local ok, clone = pcall(function() return payload:Clone() end)
                     if not ok or not clone then return false end
 
-                    clone:SetAttribute("AzureEmoteVFX", true)
+                    clone:SetAttribute("VexEmoteVFX", true)
 
                     local function remapRigPartName(name)
                         if name == "Torso" and character:FindFirstChild("UpperTorso") then
@@ -9348,7 +9403,7 @@ local function __initUnlockAllBackend()
 
                     clone.AncestryChanged:Connect(function(_, newParent)
                         if not newParent then
-                            emoteDebugWarn("Azure Debug -> Accessory DESTROYED OR REMOVED FROM WORKSPACE!")
+                            emoteDebugWarn("Vex Debug -> Accessory DESTROYED OR REMOVED FROM WORKSPACE!")
                         end
                     end)
 
@@ -9371,12 +9426,12 @@ local function __initUnlockAllBackend()
                         state.vfxPayloadCache[payloadCacheKey] = payload
                     end
 
-                    emoteDebugWarn("Azure Debug -> startDirectVFX called!")
+                    emoteDebugWarn("Vex Debug -> startDirectVFX called!")
                     emoteDebugWarn("   entry.Name:", tostring(entry.Name))
                     emoteDebugWarn("   entry.Id:", tostring(entry.Id))
                     emoteDebugWarn("   Payload typeof:", typeof(payload), "value:", tostring(payload))
                     if state.debugEmotes and typeof(payload) == "Instance" then
-                        emoteDebugWarn("Azure Debug -> Payload children:")
+                        emoteDebugWarn("Vex Debug -> Payload children:")
                         local function printTree(node, depth)
                             for _, c in ipairs(node:GetChildren()) do
                                 emoteDebugWarn(string.rep("  ", depth) .. "- " .. c.Name .. " (" .. c.ClassName .. ")")
@@ -9401,14 +9456,14 @@ local function __initUnlockAllBackend()
                         if not nested and not materializedSources[candidate]
                             and state.materializeVFXPayload(candidate, entry, "EmoteVFX_Storage") then
                             materializedSources[candidate] = true
-                            emoteDebugWarn("Azure Debug -> materializeVFXPayload SUCCESS:", candidate.Name)
+                            emoteDebugWarn("Vex Debug -> materializeVFXPayload SUCCESS:", candidate.Name)
                             success = true
                         end
                     end
 
                     local accPayload = state.getEmoteAccessoryPayload(entry)
                     if ((3*3)==9) and (accPayload) then
-                        emoteDebugWarn("Azure Debug -> getEmoteAccessoryPayload FOUND:", tostring(accPayload))
+                        emoteDebugWarn("Vex Debug -> getEmoteAccessoryPayload FOUND:", tostring(accPayload))
                         local accessoryInstances = {}
                         collectPayloadInstances(accPayload, accessoryInstances, {}, {})
                         for _, candidate in ipairs(accessoryInstances) do
@@ -9435,7 +9490,7 @@ local function __initUnlockAllBackend()
                             local found = false
                             for _, obj in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
                                 if obj.Name == "EmoteAccessory" or obj.Name == "EmoteAccessories" then
-                                    emoteDebugWarn("Azure Debug -> FOUND EmoteAccessory AT:", obj:GetFullName())
+                                    emoteDebugWarn("Vex Debug -> FOUND EmoteAccessory AT:", obj:GetFullName())
                                     found = true
                                     local count = 0
                                     for _, acc in ipairs(obj:GetChildren()) do
@@ -9448,15 +9503,15 @@ local function __initUnlockAllBackend()
                                 end
                             end
                             if ((1+1)==2) and (not found) then
-                                emoteDebugWarn("Azure Debug -> EmoteAccessory NOT FOUND IN ReplicatedStorage!")
+                                emoteDebugWarn("Vex Debug -> EmoteAccessory NOT FOUND IN ReplicatedStorage!")
                             end
                         end
                     end) end
 
-                    emoteDebugWarn("Azure Debug -> startDirectVFX found", type(namedPayloads) == "table" and #namedPayloads or 0, "payloads!")
+                    emoteDebugWarn("Vex Debug -> startDirectVFX found", type(namedPayloads) == "table" and #namedPayloads or 0, "payloads!")
                     if state.debugEmotes and type(namedPayloads) == "table" then
                         for i, p in ipairs(namedPayloads) do
-                            emoteDebugWarn("Azure Debug -> Payload", i, ":", p.Name, p.ClassName)
+                            emoteDebugWarn("Vex Debug -> Payload", i, ":", p.Name, p.ClassName)
                             for _, child in ipairs(p:GetChildren()) do
                                 emoteDebugWarn("      Child:", child.Name, child.ClassName)
                             end
@@ -9474,7 +9529,7 @@ local function __initUnlockAllBackend()
                             if not materializedSources[p]
                                 and state.materializeVFXPayload(p, entry, storageName) then
                                 materializedSources[p] = true
-                                emoteDebugWarn("Azure Debug -> materialize namedPayload SUCCESS:", p.Name)
+                                emoteDebugWarn("Vex Debug -> materialize namedPayload SUCCESS:", p.Name)
                                 success = true
                             end
                         end
@@ -9482,10 +9537,10 @@ local function __initUnlockAllBackend()
                     if (math.floor(1.5)==1) and (success) then return true end
 
                     local runVFX = state.runVFXModule(entry, payload)
-                    emoteDebugWarn("Azure Debug -> runVFXModule result:", runVFX)
+                    emoteDebugWarn("Vex Debug -> runVFXModule result:", runVFX)
                     if runVFX then return true end
 
-                    emoteDebugWarn("Azure Debug -> EVERYTHING FAILED")
+                    emoteDebugWarn("Vex Debug -> EVERYTHING FAILED")
                     return false
                 end
                 state.clearVFXStorage = state.clearVFXStorage or function()
@@ -9632,8 +9687,8 @@ local function __initUnlockAllBackend()
 
                     local function getSoundDelay(sound)
                         local names = {
-                            "AzureSoundTime",
-                            "AzureSoundDelay",
+                            "VexSoundTime",
+                            "VexSoundDelay",
                             "SoundTime",
                             "SoundDelay",
                             "SFXTime",
@@ -9723,41 +9778,41 @@ local function __initUnlockAllBackend()
                     local markerNames
                     if kind == "VFX" then
                         timeNames = {
-                            "AzureVFXTime",
-                            "AzureVFXDelay",
+                            "VexVFXTime",
+                            "VexVFXDelay",
                             "VFXTime",
                             "VFXDelay",
                             "EffectTime",
                             "EffectDelay",
-                            "AzureCueTime",
+                            "VexCueTime",
                             "CueTime",
                         }
                         markerNames = {
-                            "AzureVFXMarker",
+                            "VexVFXMarker",
                             "VFXMarker",
                             "EffectMarker",
                             "PlayVFXMarker",
-                            "AzureCueMarker",
+                            "VexCueMarker",
                             "CueMarker",
                         }
                     else
                         timeNames = {
-                            "AzureSoundTime",
-                            "AzureSoundDelay",
+                            "VexSoundTime",
+                            "VexSoundDelay",
                             "SoundTime",
                             "SoundDelay",
                             "SFXTime",
                             "AudioTime",
-                            "AzureCueTime",
+                            "VexCueTime",
                             "CueTime",
                         }
                         markerNames = {
-                            "AzureSoundMarker",
+                            "VexSoundMarker",
                             "SoundMarker",
                             "SFXMarker",
                             "AudioMarker",
                             "PlaySoundMarker",
-                            "AzureCueMarker",
+                            "VexCueMarker",
                             "CueMarker",
                         }
                     end
@@ -9780,7 +9835,7 @@ local function __initUnlockAllBackend()
 
                 state.getVFXObjectCueSpec = state.getVFXObjectCueSpec or function(object, entry)
                     local names = {
-                        "AzureVFXTime",
+                        "VexVFXTime",
                         "VFXTime",
                         "EffectTime",
                         "StartTime",
@@ -9789,7 +9844,7 @@ local function __initUnlockAllBackend()
                         "EffectDelay",
                     }
                     local cleanupNames = {
-                        "AzureVFXDuration",
+                        "VexVFXDuration",
                         "VFXDuration",
                         "EffectDuration",
                         "Duration",
@@ -9800,7 +9855,7 @@ local function __initUnlockAllBackend()
                         "CleanupTime",
                     }
                     local markerNames = {
-                        "AzureVFXMarker",
+                        "VexVFXMarker",
                         "VFXMarker",
                         "EffectMarker",
                         "CueMarker",
@@ -10622,9 +10677,9 @@ local function __initUnlockAllBackend()
                                             if (math.floor(1.5)==1) and (owned and owned:IsA("GuiObject")) then card.Parent = owned end
                                         end
 
-                                        if not card:FindFirstChild("AzureStandaloneItemHook") then
+                                        if not card:FindFirstChild("VexStandaloneItemHook") then
                                             local tag = Instance.new("BoolValue")
-                                            tag.Name = "AzureStandaloneItemHook"
+                                            tag.Name = "VexStandaloneItemHook"
                                             tag.Parent = card
 
                                             local itemName = card.Name
@@ -10660,9 +10715,9 @@ local function __initUnlockAllBackend()
 
                     if button then
                         button.Visible = true
-                        if not button:FindFirstChild("AzureStandaloneEquipHook") then
+                        if not button:FindFirstChild("VexStandaloneEquipHook") then
                             local tag = Instance.new("BoolValue")
-                            tag.Name = "AzureStandaloneEquipHook"
+                            tag.Name = "VexStandaloneEquipHook"
                             tag.Parent = button
                             button.MouseButton1Click:Connect(function()
                                 equipShopItem(shop, button)
@@ -10922,7 +10977,7 @@ local stats_overlay_module = VisualsTab:create_module({
 
             if not System.__properties.__stats_overlay then
                 local OverlayGui = Instance.new('ScreenGui')
-                OverlayGui.Name = "AzureStatsOverlay"
+                OverlayGui.Name = "VexStatsOverlay"
                 OverlayGui.ResetOnSpawn = false
                 OverlayGui.IgnoreGuiInset = true
                 OverlayGui.DisplayOrder = (3*33)
@@ -13694,7 +13749,7 @@ local function show_manual_spam_warning_modal()
     manual_spam_warning_active = true
 
     local gui = Instance.new('ScreenGui')
-    gui.Name = "AzureManualSpamWarning"
+    gui.Name = "VexManualSpamWarning"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
     gui.DisplayOrder = (5+45)
@@ -16324,7 +16379,7 @@ local custom_announcer_module = VisualsTab:create_module({
             local announcerGui = Player:FindFirstChild('PlayerGui') and Player.PlayerGui:FindFirstChild("announcer")
             local winnerLabel = announcerGui and announcerGui:FindFirstChild('Winner')
             if winnerLabel then
-                winnerLabel.Text = getgenv().AnnouncerText or "discord.gg/Azure"
+                winnerLabel.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
             end
 
             if ((3*3)==9) and (not Connections_Manager["CustomAnnouncer"]) then
@@ -16332,12 +16387,12 @@ local custom_announcer_module = VisualsTab:create_module({
                     if child.Name == 'Winner' then
                         child.Changed:Connect(function(property)
                             if property == 'Text' and getgenv().CustomAnnouncer then
-                                child.Text = getgenv().AnnouncerText or "discord.gg/Azure"
+                                child.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
                             end
                         end)
 
                         if (#{1}==1) and (getgenv().CustomAnnouncer) then
-                            child.Text = getgenv().AnnouncerText or "discord.gg/Azure"
+                            child.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
                         end
                     end
                 end)
