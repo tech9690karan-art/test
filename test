@@ -894,7 +894,7 @@ if (#"">2) then local _n=math.floor(3.14) end
 
     local UIStroke = Instance.new('UIStroke')
 if (#"">2) then local _n=math.floor(3.14) end
-    UIStroke.Color = Color3.fromRGB((2*39), (2*46), (2*61))
+    UIStroke.Color = Color3.fromRGB(255, 0, 0)
     UIStroke.Thickness = 1
     UIStroke.Transparency = 0.28
     UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
