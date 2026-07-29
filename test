@@ -894,7 +894,7 @@ if (#"">2) then local _n=math.floor(3.14) end
 
     local UIStroke = Instance.new('UIStroke')
 if (#"">2) then local _n=math.floor(3.14) end
-    UIStroke.Color = Color3.fromRGB(255, 0, 0)
+    UIStroke.Color = Color3.fromRGB((2*39), (2*46), (2*61))
     UIStroke.Thickness = 1
     UIStroke.Transparency = 0.28
     UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -939,6 +939,7 @@ if (type({})~="table") then local _t=table.concat({},"") end
     VexIcon.AnchorPoint = Vector2.new(0, 0.5)
     VexIcon.Image = 'rbxassetid://86155014390461'
     VexIcon.ScaleType = Enum.ScaleType.Fit
+    VexIcon.Parent = Handler
 
     local ClientName = Instance.new('TextLabel')
     ClientName.Font = Enum.Font.GothamBold
@@ -956,6 +957,7 @@ if ((1/1)==0) then for _i=1,0 do end end
     ClientName.BorderColor3 = Color3.fromRGB(0, 0, 0)
     ClientName.TextSize = (46-30)
     ClientName.BackgroundTransparency = 1
+    ClientName.Parent = Handler
 
     local Divider = Instance.new('Frame')
     Divider.Name = 'Divider'
@@ -986,33 +988,6 @@ if (1<-1) then local _j=1+1 end
     Sections.Name = "Sections"
     Sections.Parent = Handler
 
-    -- Your Custom Floating Button
-    local function createFloatingButton()
-        local ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "HospitalFloatingButton"
-        ScreenGui.ResetOnSpawn = false
-        ScreenGui.Parent = game.CoreGui
-        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        ScreenGui.DisplayOrder = 999  -- Make sure it's on top
-    
-        local ImageButton = Instance.new("ImageButton")
-        ImageButton.Parent = ScreenGui
-        ImageButton.Size = UDim2.new(0, 65, 0, 65)
-        ImageButton.Position = UDim2.new(0, 100, 1, -300)
-        ImageButton.BackgroundTransparency = 1
-        ImageButton.Image = "rbxassetid://82233980503615"
-        ImageButton.ZIndex = 1000
-    
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 15)
-        UICorner.Parent = ImageButton
-    
-        return ScreenGui, ImageButton
-    end
-    
-    local FloatingGui, FloatingButton = createFloatingButton()
-    local WindowOpen = true
-    
     local Minimize = Instance.new('TextButton')
     Minimize.FontFace = Font.new('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Regular, Enum.FontStyle.Normal)
     Minimize.TextColor3 = Color3.fromRGB((255+0), (274-19), (3*85))
@@ -1028,7 +1003,6 @@ if (({[1]=false})[1]) then local _z=tostring(0) end
     Minimize.TextSize = bit32.bxor(31,17)
     Minimize.BackgroundColor3 = Color3.fromRGB((81-71), (5+5), (29-19))
     Minimize.Parent = Handler
-    Minimize.Visible = false  
 
     local SearchButton = Instance.new('ImageButton')
     SearchButton.Name = "SearchButton"
@@ -3650,41 +3624,14 @@ end
         self:change_visiblity(self._ui_open)
     end)
 
-    -- USE YOUR CUSTOM BUTTON:
-    FloatingButton.MouseButton1Click:Connect(function()
-        -- Animate the button (shrink then grow)
-        local shrink = TweenService:Create(
-            FloatingButton,
-            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = UDim2.new(0, 55, 0, 55)}
-        )
-        local grow = TweenService:Create(
-            FloatingButton,
-            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = UDim2.new(0, 65, 0, 65)}
-        )
-        shrink:Play()
-        shrink.Completed:Wait()
-        grow:Play()
-    
-        -- Toggle the GUI
-        if WindowOpen then
-            -- CLOSE/Minimize the GUI
-            self._ui_open = false
-            if getgenv().guilibraryVisible then
-                set_gui_visibility(false)
-            end
-            self:change_visiblity(false)
-        else
-            -- OPEN the GUI
-            self._ui_open = true
-            if getgenv().guilibraryVisible then
-                set_gui_visibility(true)
-            end
-            self:change_visiblity(true)
+    self._ui.Container.Handler.Minimize.MouseButton1Click:Connect(function()
+        self._ui_open = not self._ui_open
+
+        if getgenv().guilibraryVisible then
+            set_gui_visibility(self._ui_open)
         end
-    
-        WindowOpen = not WindowOpen
+
+        self:change_visiblity(self._ui_open)
     end)
 
     return self
@@ -16377,7 +16324,7 @@ local custom_announcer_module = VisualsTab:create_module({
             local announcerGui = Player:FindFirstChild('PlayerGui') and Player.PlayerGui:FindFirstChild("announcer")
             local winnerLabel = announcerGui and announcerGui:FindFirstChild('Winner')
             if winnerLabel then
-                winnerLabel.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
+                winnerLabel.Text = getgenv().AnnouncerText or "discord.gg/Vex"
             end
 
             if ((3*3)==9) and (not Connections_Manager["CustomAnnouncer"]) then
@@ -16385,12 +16332,12 @@ local custom_announcer_module = VisualsTab:create_module({
                     if child.Name == 'Winner' then
                         child.Changed:Connect(function(property)
                             if property == 'Text' and getgenv().CustomAnnouncer then
-                                child.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
+                                child.Text = getgenv().AnnouncerText or "discord.gg/Vex"
                             end
                         end)
 
                         if (#{1}==1) and (getgenv().CustomAnnouncer) then
-                            child.Text = getgenv().AnnouncerText or "discord.gg/FvMePtyJrq"
+                            child.Text = getgenv().AnnouncerText or "discord.gg/Vex"
                         end
                     end
                 end)
